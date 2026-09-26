@@ -21,6 +21,26 @@ los casos que no se atienden a tiempo.
 - **Calidad:** Vitest, Playwright, GitHub Actions
 - **Despliegue:** Vercel o Netlify
 
+## Desarrollo local
+
+Requiere Node.js 22 o superior.
+
+```bash
+npm install      # instalar dependencias
+npm run dev      # servidor de desarrollo
+npm run lint     # revisar el código
+npm test         # pruebas unitarias
+npm run build    # build de producción
+```
+
+## Flujo de trabajo
+
+1. Crear una rama desde `develop` (`feature/nombre`, `fix/nombre`).
+2. Abrir un Pull Request hacia `develop`. El CI corre lint, build y pruebas.
+3. `main` solo recibe cambios por Pull Request desde `develop`.
+
+Detalle del pipeline en [docs/CI-CD.md](docs/CI-CD.md).
+
 ## Equipo
 
 Proyecto desarrollado por un equipo de 10 estudiantes del ITLA, bajo el marco Scrum
