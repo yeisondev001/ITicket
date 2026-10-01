@@ -32,7 +32,14 @@ Corre solo después de que el CI pasa en un push (es decir, al hacer merge):
 | `develop` | `staging` | Pruebas |
 | `main` | `production` | Producción |
 
-**Está apagado** hasta que se configure. Para encenderlo:
+**Estado actual:**
+
+| Ambiente | Proyecto Supabase | Estado |
+|---|---|---|
+| `staging` | `iticket-pruebas` | Configurado |
+| `production` | `iticket-produccion` | Pendiente: se crea antes de la primera demo |
+
+Un ambiente sin secretos termina en verde con un aviso, sin desplegar nada. Para encender uno:
 
 1. Crear los proyectos en [supabase.com](https://supabase.com) (uno de pruebas y uno de producción; el plan gratis permite 2).
 2. Inicializar Supabase en el repo: `npx supabase init` (crea la carpeta `supabase/`).
