@@ -144,6 +144,9 @@ ITicket/
 ├── docs/                # Documentación técnica
 ├── public/              # Archivos estáticos
 ├── src/
+│   ├── app/             # Rutas
+│   ├── components/      # Layout, componentes compartidos y de shadcn/ui
+│   ├── features/        # Un módulo por funcionalidad (home, tickets…)
 │   └── lib/             # Lógica de negocio (p. ej. cálculo de prioridad)
 ├── supabase/
 │   ├── migrations/      # Cambios de la base de datos, en orden
@@ -186,6 +189,7 @@ Detalle en [docs/CI-CD.md](docs/CI-CD.md).
 |---|---|
 | [docs/CI-CD.md](docs/CI-CD.md) | Pipeline, ambientes y cómo configurarlos |
 | [docs/modelo-de-datos.md](docs/modelo-de-datos.md) | Diagrama entidad-relación de la base de datos |
+| [docs/frontend.md](docs/frontend.md) | Estructura del frontend, flujo de datos y convenciones |
 
 ## Planificación
 

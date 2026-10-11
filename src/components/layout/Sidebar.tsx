@@ -1,36 +1,56 @@
-import { navegacionPorRol, type ItemNavegacion } from '../../config/navegacion'
-import type { Rol } from '../../types/usuario'
+import { NavLink } from 'react-router'
+import { TicketIcon } from 'lucide-react'
+import { navegacionPorRol, type ItemNavegacion } from '@/config/navegacion'
+import { cn } from '@/lib/utils'
+import type { Rol } from '@/types/usuario'
 
 interface SidebarProps {
   rol: Rol
-  rutaActiva: string
-  abierto: boolean
+  onNavegar?: () => void // cierra el menú en celulares
+  className?: string
 }
 
-function ListaNavegacion({ items, rutaActiva }: { items: ItemNavegacion[]; rutaActiva: string }) {
+function ListaNavegacion({ items, onNavegar }: { items: ItemNavegacion[]; onNavegar?: () => void }) {
   return (
-    <ul>
-      {items.map((item) => (
-        <li key={item.id}>
-          <a href={item.ruta} aria-current={item.ruta === rutaActiva ? 'page' : undefined}>
-            {item.etiqueta}
-          </a>
+    <ul className="flex flex-col gap-0.5">
+      {items.map(({ id, ruta, etiqueta, icono: Icono }) => (
+        <li key={id}>
+          <NavLink
+            to={ruta}
+            end={ruta === '/'}
+            onClick={onNavegar}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors',
+                'hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
+                isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
+              )
+            }
+          >
+            <Icono className="size-4.5" aria-hidden="true" />
+            {etiqueta}
+          </NavLink>
         </li>
       ))}
     </ul>
   )
 }
 
-export function Sidebar({ rol, rutaActiva, abierto }: SidebarProps) {
+export function Sidebar({ rol, onNavegar, className }: SidebarProps) {
   return (
-    <aside id="sidebar" className="sidebar" data-abierto={abierto}>
-      <div className="sidebar-logo">ITicket</div>
+    <div className={cn('flex h-full flex-col gap-6 px-3 py-5', className)}>
+      <div className="flex items-center gap-2.5 px-2">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <TicketIcon className="size-4" aria-hidden="true" />
+        </span>
+        <span className="text-lg font-bold tracking-tight">ITicket</span>
+      </div>
       <nav aria-label="Navegación principal">
-        <ListaNavegacion items={navegacionPorRol(rol, 'principal')} rutaActiva={rutaActiva} />
+        <ListaNavegacion items={navegacionPorRol(rol, 'principal')} onNavegar={onNavegar} />
       </nav>
-      <nav aria-label="Cuenta" className="sidebar-inferior">
-        <ListaNavegacion items={navegacionPorRol(rol, 'inferior')} rutaActiva={rutaActiva} />
+      <nav aria-label="Cuenta" className="mt-auto border-t pt-3">
+        <ListaNavegacion items={navegacionPorRol(rol, 'inferior')} onNavegar={onNavegar} />
       </nav>
-    </aside>
+    </div>
   )
 }

@@ -1,8 +1,7 @@
-import { HomePage } from './features/home/pages/HomePage'
+import { AppRouter } from './app/router'
 
-// Sin router todavía: la única pantalla es Inicio.
 function App() {
-  return <HomePage />
+  return <AppRouter />
 }
 
 export default App

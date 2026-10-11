@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface SeccionVaciaProps {
   titulo: string
@@ -6,14 +7,20 @@ interface SeccionVaciaProps {
   children?: ReactNode
 }
 
-// Bloque con título y estado vacío. Sirve mientras una sección no tiene datos
-// y luego como estado vacío real (por ejemplo, "no hay tickets").
+// Bloque con título y estado vacío. Sirve mientras una sección no tiene datos.
 export function SeccionVacia({ titulo, descripcion, children }: SeccionVaciaProps) {
-  const idTitulo = `seccion-${titulo.toLowerCase().replaceAll(' ', '-')}`
   return (
-    <section className="seccion" aria-labelledby={idTitulo}>
-      <h2 id={idTitulo}>{titulo}</h2>
-      {children ?? <p className="seccion-vacia">{descripcion}</p>}
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <h2>{titulo}</h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {children ?? (
+          <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">{descripcion}</p>
+        )}
+      </CardContent>
+    </Card>
   )
 }
