@@ -190,6 +190,7 @@ Detalle en [docs/CI-CD.md](docs/CI-CD.md).
 | [docs/CI-CD.md](docs/CI-CD.md) | Pipeline, ambientes y cómo configurarlos |
 | [docs/modelo-de-datos.md](docs/modelo-de-datos.md) | Diagrama entidad-relación de la base de datos |
 | [docs/frontend.md](docs/frontend.md) | Estructura del frontend, flujo de datos y convenciones |
+| [docs/PLAN-DE-PRUEBAS.md](docs/PLAN-DE-PRUEBAS.md) | Plan de pruebas del proyecto |
 
 ## Planificación
 
