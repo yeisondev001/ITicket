@@ -26,3 +26,8 @@ npm-debug.log*
 # Pruebas
 /test-results/
 /playwright-report/
+
+# Playwright
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
