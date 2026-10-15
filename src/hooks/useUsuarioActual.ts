@@ -1,13 +1,10 @@
+import { useAuth } from '@/features/auth/context/useAuth'
 import type { UsuarioActual } from '@/types/usuario'
 
-// Mock temporal. Cuando exista el login, este hook leerá la sesión de
-// Supabase Auth y el perfil del usuario; los componentes no cambian.
-const USUARIO_MOCK: UsuarioActual = {
-  id: 'mock-tecnico-1',
-  nombre: 'Starlyn',
-  rol: 'tecnico',
-}
-
+// Usuario con sesión iniciada. Solo se usa dentro de rutas protegidas
+// (ver RutaProtegida), donde siempre hay sesión.
 export function useUsuarioActual(): UsuarioActual {
-  return USUARIO_MOCK
+  const { usuario } = useAuth()
+  if (!usuario) throw new Error('useUsuarioActual se usó fuera de una ruta protegida.')
+  return usuario
 }

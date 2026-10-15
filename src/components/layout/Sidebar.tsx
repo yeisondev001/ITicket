@@ -1,6 +1,7 @@
-import { NavLink } from 'react-router'
-import { TicketIcon } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router'
+import { LogOutIcon, TicketIcon } from 'lucide-react'
 import { navegacionPorRol, type ItemNavegacion } from '@/config/navegacion'
+import { useAuth } from '@/features/auth/context/useAuth'
 import { cn } from '@/lib/utils'
 import type { Rol } from '@/types/usuario'
 
@@ -37,6 +38,15 @@ function ListaNavegacion({ items, onNavegar }: { items: ItemNavegacion[]; onNave
 }
 
 export function Sidebar({ rol, onNavegar, className }: SidebarProps) {
+  const { cerrarSesion } = useAuth()
+  const navigate = useNavigate()
+
+  const salir = async () => {
+    onNavegar?.()
+    await cerrarSesion()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className={cn('flex h-full flex-col gap-6 px-3 py-5', className)}>
       <div className="flex items-center gap-2.5 px-2">
@@ -50,6 +60,14 @@ export function Sidebar({ rol, onNavegar, className }: SidebarProps) {
       </nav>
       <nav aria-label="Cuenta" className="mt-auto border-t pt-3">
         <ListaNavegacion items={navegacionPorRol(rol, 'inferior')} onNavegar={onNavegar} />
+        <button
+          type="button"
+          onClick={salir}
+          className="mt-0.5 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          <LogOutIcon className="size-4.5" aria-hidden="true" />
+          Cerrar sesión
+        </button>
       </nav>
     </div>
   )
