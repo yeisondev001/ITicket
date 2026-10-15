@@ -26,3 +26,6 @@ npm-debug.log*
 # Pruebas
 /test-results/
 /playwright-report/
+/.vs/ITicket
+/package-lock.json
+/.vs
