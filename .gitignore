@@ -31,9 +31,6 @@ npm-debug.log*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-/.vs/ITicket/v17
-/.vs/ITicket/config
-/.vs/ITicket/CopilotIndices/17.14.1713.63837/CodeChunks.db
-/.vs/ITicket/CopilotIndices
-/.vs/ITicket/FileContentIndex
-/.vs
+
+# Visual Studio
+/.vs/

@@ -37,3 +37,20 @@ jobs:
 
       - name: Pruebas unitarias
         run: npm test
+
+  base-de-datos:
+    name: Pruebas de base de datos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Levanta un Postgres de Supabase vacío y le aplica todas las migraciones.
+      - name: Base de datos local con las migraciones
+        run: supabase db start
+
+      - name: Pruebas de RLS (pgTAP)
+        run: supabase test db
