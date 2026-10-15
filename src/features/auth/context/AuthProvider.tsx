@@ -1,27 +1,92 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import type { UsuarioActual } from '@/types/usuario'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { UsuarioActual } from '@/types/usuario' 
+import { supabase } from '@/lib/supabase'
 import type { CredencialesLogin } from '../lib/validacionLogin'
 import * as auth from '../services/auth.service'
 import { AuthContext } from './AuthContext'
 
-// Guarda la sesión del usuario para toda la aplicación.
-// Con Supabase Auth, el estado inicial saldrá de `supabase.auth.getSession()`
-// y de `onAuthStateChange`; el resto de la app no cambia.
+type SesionAuth = { user: { id: string } } | null
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<UsuarioActual | null>(() => auth.sesionGuardada())
+    const [usuario, setUsuario] = useState<UsuarioActual | null>(null)
+    const [cargando, setCargando] = useState(true)
 
-  const iniciarSesion = useCallback(async (credenciales: CredencialesLogin) => {
-    const encontrado = await auth.iniciarSesion(credenciales)
-    setUsuario(encontrado)
-    return encontrado
-  }, [])
+    useEffect(() => {
+        let activo = true
+        let revision = 0
 
-  const cerrarSesion = useCallback(async () => {
-    await auth.cerrarSesion()
-    setUsuario(null)
-  }, [])
+        const actualizarSesion = (sesion: SesionAuth) => {
+            const revisionActual = ++revision
 
-  const valor = useMemo(() => ({ usuario, iniciarSesion, cerrarSesion }), [usuario, iniciarSesion, cerrarSesion])
+            window.setTimeout(() => {
+                const cargarPerfil = sesion ? auth.obtenerUsuarioPorId(sesion.user.id) : Promise.resolve(null)
 
-  return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>
+                void cargarPerfil.then((usuarioActual) => {
+                    if (activo && revisionActual === revision) {
+                        setUsuario(usuarioActual)
+                    }
+                }).catch(() => {
+                    if (activo && revisionActual === revision) {
+                        setUsuario(null)
+                    }
+                }).finally(() => {
+                    if (activo && revisionActual === revision) {
+                        setCargando(false)
+                    }
+                })
+            }, 0)
+        }
+
+        const { data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+                actualizarSesion(session)
+            }
+        })
+
+        const revisionInicial = ++revision
+
+        void auth.obtenerUsuarioActual()
+            .then((usuarioActual) => {
+                if (activo && revisionInicial === revision) {
+                    setUsuario(usuarioActual)
+                }
+            }).catch(() => {
+                if (activo && revisionInicial === revision) {
+                    setUsuario(null)
+                }
+            })
+            .finally(() => {
+                if (activo && revisionInicial === revision) {
+                    setCargando(false)
+                }
+            })
+
+        return () => {
+            activo = false
+            subscription.unsubscribe()
+        }
+
+    }, [])
+
+    const iniciarSesion = useCallback(async (credenciales: CredencialesLogin) => {
+        const usuarioAutenticado = await auth.iniciarSesion(credenciales)
+        setUsuario(usuarioAutenticado)
+        setCargando(false)
+        return usuarioAutenticado
+    }, [])
+
+    const cerrarSesion = useCallback(async () => {
+        await auth.cerrarSesion()
+        setUsuario(null)
+        setCargando(false)
+    }, [])
+
+    const valor = useMemo(
+        () => ({ usuario, cargando, iniciarSesion, cerrarSesion }),
+        [usuario, cargando, iniciarSesion, cerrarSesion]
+    )
+
+    return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>
+    
 }
