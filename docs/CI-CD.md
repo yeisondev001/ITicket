@@ -19,6 +19,10 @@ Corre en cada Pull Request y en cada push a `develop` o `main`:
 3. `npm run build` — compila TypeScript y genera el build de Vite
 4. `npm test` — pruebas unitarias con Vitest
 
+En paralelo, el job **Pruebas de base de datos** levanta un Postgres de Supabase vacío
+(`supabase db start`), le aplica todas las migraciones y corre las pruebas de RLS de
+`supabase/tests/database` con pgTAP (`supabase test db`).
+
 Si un paso falla, el PR queda en rojo y no se puede mergear a `main`.
 
 ## CD
