@@ -1,29 +1,34 @@
 -- 1. Habilitar la extensión de tareas programadas (pg_cron)
 CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
 
--- 2. Función que busca tickets con SLA vencido y cambia su estado a 'Escalado'
+-- 2. Función que busca tickets con SLA vencido y escala su nivel
 CREATE OR REPLACE FUNCTION public.revisar_y_escalar_sla()
-RETURNS void AS $$
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   UPDATE public.tickets
   SET 
-    estado = 'Escalado',
-    updated_at = NOW()
+    estado = 'escalado',
+    nivel_escalamiento = nivel_escalamiento + 1
   WHERE 
-    estado IN ('Nuevo', 'Asignado', 'En proceso')
-    AND fecha_limite_sla IS NOT NULL
-    AND fecha_limite_sla < NOW();
+    estado IN ('nuevo', 'asignado', 'en_progreso')
+    AND sla_vence_en IS NOT NULL
+    AND sla_vence_en < now();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+-- Restringir la ejecución para que solo la invoque el cron interno y nunca la API pública
+REVOKE EXECUTE ON FUNCTION public.revisar_y_escalar_sla() FROM public, anon, authenticated;
 
 -- 3. Programar la ejecución automática cada 2 minutos
--- Desprogramar si ya existía para evitar duplicados
 SELECT cron.unschedule('vigilar-sla-tickets')
 WHERE EXISTS (
   SELECT 1 FROM cron.job WHERE jobname = 'vigilar-sla-tickets'
 );
 
--- Programar el cron job
 SELECT cron.schedule(
   'vigilar-sla-tickets',
   '*/2 * * * *',
