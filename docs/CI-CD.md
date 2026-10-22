@@ -42,6 +42,18 @@ enums, se regeneran con:
 npx supabase gen types typescript --project-id lwwokrawvwtjuekwuobd > supabase/types/database.types.ts
 ```
 
+### Issue enlazado — `.github/workflows/issue-enlazado.yml`
+
+Cada PR hacia `develop` debe decir en su descripción qué issue termina o avanza:
+
+- `Closes #N` (o `Fixes`/`Resolves`): termina la tarea. La tarjeta pasa sola a *En revisión* y, al
+  mergear, a *Hecho*.
+- `Relacionado con #N`: solo la avanza; el issue sigue abierto.
+
+La plantilla de PR (`.github/pull_request_template.md`) ya trae el `Closes #` para llenar. Si la
+descripción no menciona ningún issue, el check sale en rojo; al editarla se vuelve a revisar solo.
+Los PR de `develop` a `main` no lo necesitan.
+
 Si un paso falla, el PR queda en rojo y no se puede mergear a `main`.
 
 ## CD
