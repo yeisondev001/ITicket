@@ -21,7 +21,38 @@ Corre en cada Pull Request y en cada push a `develop` o `main`:
 
 En paralelo, el job **Pruebas de base de datos** levanta un Postgres de Supabase vacío
 (`supabase db start`), le aplica todas las migraciones y corre las pruebas de RLS de
-`supabase/tests/database` con pgTAP (`supabase test db`).
+`supabase/tests/database` con pgTAP (`supabase test db`). Cada función SQL nueva debe tener
+una prueba que la **ejecute**: PostgreSQL no revisa el contenido de una función `plpgsql` al
+crearla, solo al llamarla.
+
+El job **Edge Functions** revisa los tipos de cada `supabase/functions/*/index.ts` con
+`deno check`. Si la función crea el cliente con los tipos de la base de datos, el CI también
+detecta columnas o valores de enum que no existen (por ejemplo `"Monitoreo"` en vez de
+`"monitoreo"`):
+
+```ts
+import type { Database } from '../../types/database.types.ts'
+const supabase = createClient<Database>(url, clave)
+```
+
+Los tipos están en `supabase/types/database.types.ts`. Cuando una migración cambie tablas o
+enums, se regeneran con:
+
+```bash
+npx supabase gen types typescript --project-id lwwokrawvwtjuekwuobd > supabase/types/database.types.ts
+```
+
+### Issue enlazado — `.github/workflows/issue-enlazado.yml`
+
+Cada PR hacia `develop` debe decir en su descripción qué issue termina o avanza:
+
+- `Closes #N` (o `Fixes`/`Resolves`): termina la tarea. La tarjeta pasa sola a *En revisión* y, al
+  mergear, a *Hecho*.
+- `Relacionado con #N`: solo la avanza; el issue sigue abierto.
+
+La plantilla de PR (`.github/pull_request_template.md`) ya trae el `Closes #` para llenar. Si la
+descripción no menciona ningún issue, el check sale en rojo; al editarla se vuelve a revisar solo.
+Los PR de `develop` a `main` no lo necesitan.
 
 Si un paso falla, el PR queda en rojo y no se puede mergear a `main`.
 

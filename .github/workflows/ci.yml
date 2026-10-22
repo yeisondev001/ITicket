@@ -54,3 +54,26 @@ jobs:
 
       - name: Pruebas de RLS (pgTAP)
         run: supabase test db
+
+  edge-functions:
+    name: Edge Functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Revisa los tipos de cada Edge Function, como `npm run build` con el
+      # frontend. Con createClient<Database> también detecta columnas y
+      # valores de enum que no existen en la base de datos.
+      - name: Revisar tipos (deno check)
+        run: |
+          shopt -s nullglob
+          funciones=(supabase/functions/*/index.ts)
+          if [ ${#funciones[@]} -eq 0 ]; then
+            echo "Todavía no hay Edge Functions."
+            exit 0
+          fi
+          deno check "${funciones[@]}"
