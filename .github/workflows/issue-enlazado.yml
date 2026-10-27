@@ -1,0 +1,29 @@
+# Revisa que cada PR hacia develop diga qué issue termina o avanza. Con
+# "Closes #N" la tarjeta del tablero se mueve sola a "En revisión" y, al
+# mergear, a "Hecho". Los PR de develop a main no lo necesitan.
+name: Issue enlazado
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  issue-enlazado:
+    name: Issue enlazado
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar que el PR mencione un issue
+        env:
+          DESCRIPCION: ${{ github.event.pull_request.body }}
+        run: |
+          patron='(close[sd]?|fix(e[sd])?|resolve[sd]?|relacionado con):?[[:space:]]*#[0-9]+'
+          if printf '%s' "$DESCRIPCION" | grep -qiE "$patron"; then
+            echo "El PR menciona un issue."
+          else
+            echo "::error::Agrega en la descripción del PR 'Closes #N' (si termina la tarea) o 'Relacionado con #N' (si solo la avanza)."
+            exit 1
+          fi
