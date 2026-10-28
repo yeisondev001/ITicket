@@ -1,6 +1,12 @@
 // Mismos valores que el enum rol_usuario de la base de datos
-// (supabase/migrations/20260930120000_tablas_base.sql).
-export type Rol = 'usuario' | 'tecnico' | 'supervisor' | 'administrador'
+// (supabase/migrations/20261001215725_remote_schema.sql).
+export const ROLES = ['usuario', 'tecnico', 'supervisor', 'administrador'] as const
+export type Rol = (typeof ROLES)[number]
+
+// El rol llega de la base de datos como texto: solo se aceptan los cuatro conocidos.
+export function esRol(valor: unknown): valor is Rol {
+  return typeof valor === 'string' && (ROLES as readonly string[]).includes(valor)
+}
 
 export const ROL_ETIQUETA: Record<Rol, string> = {
   usuario: 'Usuario',
