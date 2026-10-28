@@ -75,32 +75,11 @@ function DetalleTicket({ ticket, detalle, onCambio }: DetalleTicketProps) {
   const [solucion, setSolucion] = useState('')
   const [comentario, setComentario] = useState('')
 
-const ejecutar = async (accion: () => Promise<unknown>, esEscalado = false) => {
+  const ejecutar = async (accion: () => Promise<unknown>) => {
     setGuardando(true)
     setErrorAccion(null)
     try {
       await accion()
-
-      // Si la acción fue escalar, disparar la Edge Function hacia Telegram
-      if (esEscalado) {
-        try {
-          await fetch('https://lwwokrawvwtjuekwuobd.supabase.co/functions/v1/enviar-notificacion', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-iticket-token': 'iticket_token_secreto_123',
-            },
-            body: JSON.stringify({
-              ticketId: ticket.id,
-              ticketTitulo: ticket.titulo,
-              mensaje: `🚨 *ALERTA DE ESCALAMIENTO* 🚨\n\nEl ticket *${ticket.titulo}* (ID: \`${ticket.id}\`) ha sido escalado.`,
-            }),
-          })
-        } catch (fetchErr) {
-          console.error('Error al invocar Edge Function de Telegram:', fetchErr)
-        }
-      }
-
       onCambio()
       return true
     } catch (e) {
@@ -147,7 +126,7 @@ const ejecutar = async (accion: () => Promise<unknown>, esEscalado = false) => {
             onChange={(e) => {
               const estado = e.target.value as TicketEstado
               if (estado === 'resuelto') setResolviendo(true)
-              else void ejecutar(() => cambiarEstado(ticket.id, estado, autor), estado === 'escalado')
+              else void ejecutar(() => cambiarEstado(ticket.id, estado, autor))
             }}
           >
             {ticket.estado === 'nuevo' && <option value="nuevo">{ESTADO_ETIQUETA.nuevo}</option>}
@@ -161,7 +140,7 @@ const ejecutar = async (accion: () => Promise<unknown>, esEscalado = false) => {
             variant="destructive"
             size="lg"
             disabled={guardando || !abierto || ticket.estado === 'escalado'}
-            onClick={() => void ejecutar(() => cambiarEstado(ticket.id, 'escalado', autor), true)}
+            onClick={() => void ejecutar(() => cambiarEstado(ticket.id, 'escalado', autor))}
           >
             Escalar
           </Button>

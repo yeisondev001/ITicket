@@ -1,56 +1,56 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { Database } from "../../types/database.types.ts";
+
+// Recibe las alertas del monitoreo (UptimeRobot) y crea un ticket.
+// Exige el encabezado x-iticket-token igual al secreto ITICKET_INTERNAL_TOKEN.
+
+// Caída de un servicio: impacto alto y urgencia alta → P1 en la matriz ITIL,
+// con 1 hora de SLA (src/lib/prioridad.ts). Sin sla_vence_en, el cron de
+// escalamiento nunca lo vería.
+const HORAS_SLA_P1 = 1;
+
+const json = (cuerpo: unknown, status: number) =>
+  new Response(JSON.stringify(cuerpo), { status, headers: { "Content-Type": "application/json" } });
 
 serve(async (req) => {
-  // 1. Validar el token de seguridad interno
-  const internalToken = Deno.env.get("ITICKET_INTERNAL_TOKEN");
-  const authHeader = req.headers.get("x-iticket-token");
+  if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
 
-  if (!internalToken || authHeader !== internalToken) {
-    return new Response(JSON.stringify({ error: "No autorizado" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  const tokenInterno = Deno.env.get("ITICKET_INTERNAL_TOKEN");
+  if (!tokenInterno || req.headers.get("x-iticket-token") !== tokenInterno) {
+    return json({ error: "No autorizado" }, 401);
   }
 
   try {
-    const body = await req.json();
-    const { alerta_id, servicio, descripcion, detalles } = body;
+    const { alerta_id, servicio, descripcion, detalles } = await req.json();
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient<Database>(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
-    // 2. Insertar usando los enums exactos en minúsculas
     const { data, error } = await supabase
       .from("tickets")
       .insert({
-        alerta_id: alerta_id || null,
+        alerta_id: alerta_id ? String(alerta_id) : null,
         titulo: `Caída de servicio: ${servicio || "Alerta externa"}`,
         descripcion: descripcion || detalles || "Alerta automática recibida desde monitoreo",
         origen: "monitoreo",
         estado: "nuevo",
         impacto: "alto",
-        urgencia: "alta"
+        urgencia: "alta",
+        prioridad: "P1",
+        sla_vence_en: new Date(Date.now() + HORAS_SLA_P1 * 3_600_000).toISOString(),
       })
       .select()
       .single();
 
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    // La misma alerta llegó dos veces: alerta_id es único, el ticket ya existe.
+    if (error?.code === "23505") return json({ ok: true, mensaje: "La alerta ya tenía ticket" }, 200);
+    if (error) return json({ error: error.message }, 400);
 
-    return new Response(JSON.stringify({ ok: true, ticket: data }), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ ok: true, ticket: data }, 201);
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: err instanceof Error ? err.message : "Error interno" }, 500);
   }
 });
