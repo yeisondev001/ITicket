@@ -50,8 +50,12 @@ Cada PR hacia `develop` debe decir en su descripción qué issue termina o avanz
   mergear, a *Hecho*.
 - `Relacionado con #N`: solo la avanza; el issue sigue abierto.
 
-La plantilla de PR (`.github/pull_request_template.md`) ya trae el `Closes #` para llenar. Si la
-descripción no menciona ningún issue, el check sale en rojo; al editarla se vuelve a revisar solo.
+El número debe ser una **tarea real del tablero**: un issue (no un PR), abierto y que esté en el
+proyecto "Tablero ITicket". El check lo consulta en GitHub (`.github/scripts/verificar-issue.sh`)
+y sale en rojo si ningún número cumple, por ejemplo `#999`, un PR o una tarea ya cerrada.
+
+La plantilla de PR (`.github/pull_request_template.md`) ya trae el `Closes #` para llenar. Al
+editar la descripción, el check se vuelve a revisar solo.
 Los PR de `develop` a `main` no lo necesitan.
 
 Si un paso falla, el PR queda en rojo y no se puede mergear a `main`.
