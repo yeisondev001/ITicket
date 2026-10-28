@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { ArrowLeftIcon, ActivityIcon } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { ArrowLeftIcon, ActivityIcon, Trash2Icon } from 'lucide-react'
 import { NativeSelect } from '@/components/common/NativeSelect'
 import { EstadoCarga } from '@/components/feedback/EstadoCarga'
 import { EstadoError } from '@/components/feedback/EstadoError'
@@ -19,7 +19,7 @@ import { SlaIndicator } from '../components/SlaIndicator'
 import { StatusBadge } from '../components/StatusBadge'
 import { useTicket } from '../hooks/useTicket'
 import { CATEGORIA_ETIQUETA, codigoTicket, ESTADO_ETIQUETA, estaAbierto, formatoFecha, ORIGEN_ETIQUETA } from '../lib/etiquetas'
-import { agregarComentario, cambiarEstado } from '../services/tickets.service'
+import { agregarComentario, cambiarEstado, eliminarTicket } from '../services/tickets.service'
 import type { Ticket, TicketEstado } from '../types/ticket.types'
 
 const ESTADOS_EDITABLES: TicketEstado[] = ['asignado', 'en_progreso', 'escalado', 'resuelto', 'cerrado']
@@ -74,6 +74,9 @@ function DetalleTicket({ ticket, detalle, onCambio }: DetalleTicketProps) {
   const [resolviendo, setResolviendo] = useState(false)
   const [solucion, setSolucion] = useState('')
   const [comentario, setComentario] = useState('')
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false)
+  const navegar = useNavigate()
+  const esAdministrador = usuario.rol === 'administrador'
 
   const ejecutar = async (accion: () => Promise<unknown>) => {
     setGuardando(true)
@@ -147,8 +150,47 @@ function DetalleTicket({ ticket, detalle, onCambio }: DetalleTicketProps) {
           <Button size="lg" disabled={guardando || !abierto} onClick={() => setResolviendo(true)}>
             Resolver ticket
           </Button>
+          {esAdministrador && (
+            <Button
+              variant="outline"
+              size="lg"
+              disabled={guardando}
+              onClick={() => setConfirmandoBorrado(true)}
+            >
+              <Trash2Icon aria-hidden="true" />
+              Eliminar
+            </Button>
+          )}
         </div>
       </div>
+
+      {confirmandoBorrado && (
+        <div
+          role="alertdialog"
+          aria-labelledby="borrar-titulo"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3"
+        >
+          <p id="borrar-titulo" className="text-sm">
+            ¿Eliminar <span className="font-mono">{codigoTicket(ticket.id)}</span> con sus comentarios? No se puede deshacer.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="ghost" disabled={guardando} onClick={() => setConfirmandoBorrado(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={guardando}
+              onClick={async () => {
+                const ok = await ejecutar(() => eliminarTicket(ticket.id))
+                if (ok) navegar('/tickets', { replace: true })
+                else setConfirmandoBorrado(false)
+              }}
+            >
+              Eliminar definitivamente
+            </Button>
+          </div>
+        </div>
+      )}
 
       {errorAccion && (
         <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">

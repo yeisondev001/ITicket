@@ -11,7 +11,7 @@ function clienteFalso(respuestas: Record<string, { data: unknown; error: unknown
     const consulta = {
       then: (resolver: (r: unknown) => unknown) => Promise.resolve(respuestas[tabla]).then(resolver),
     } as Record<string, unknown>
-    for (const metodo of ['select', 'insert', 'update', 'eq', 'order']) {
+    for (const metodo of ['select', 'insert', 'update', 'delete', 'eq', 'order']) {
       consulta[metodo] = (...args: unknown[]) => {
         llamadas.push({ tabla, metodo, args })
         return consulta
@@ -97,5 +97,19 @@ describe('servicio de tickets con Supabase', () => {
         { id: 't1', nombre: 'Starlyn' },
       ),
     ).rejects.toThrow('Tu rol no tiene permiso para hacer esta acción.')
+  })
+
+  it('el administrador elimina el ticket indicado', async () => {
+    const { db, llamadas } = clienteFalso({ tickets: { data: [{ id: 1 }], error: null } })
+    await crearServicioSupabase(db).eliminarTicket(1)
+    expect(llamadas.some((l) => l.metodo === 'delete')).toBe(true)
+    expect(llamadas.find((l) => l.metodo === 'eq')?.args).toEqual(['id', 1])
+  })
+
+  it('si RLS no deja borrar (ninguna fila afectada), avisa que no tiene permiso', async () => {
+    const { db } = clienteFalso({ tickets: { data: [], error: null } })
+    await expect(crearServicioSupabase(db).eliminarTicket(1)).rejects.toThrow(
+      'Tu rol no tiene permiso para hacer esta acción.',
+    )
   })
 })
