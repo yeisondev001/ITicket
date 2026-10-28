@@ -1,4 +1,4 @@
-import type { UsuarioActual } from '@/types/usuario'
+import { esRol, type UsuarioActual } from '@/types/usuario'
 import { supabase } from '@/lib/supabase'
 import { CONTRASENA_DEMO, CUENTAS_DEMO } from '../data/cuentas.mock'
 import type { CredencialesLogin } from '../lib/validacionLogin'
@@ -50,7 +50,8 @@ export function sesionGuardada(): UsuarioActual | null {
 async function leerPerfil(id: string): Promise<UsuarioActual | null> {
   if (!supabase) return null
   const { data, error } = await supabase.from('perfiles').select('id, nombre, rol, activo').eq('id', id).maybeSingle()
-  if (error || !data || !data.activo) return null
+  // Validación de rol aportada por Yahir (PR #58).
+  if (error || !data || !data.activo || !esRol(data.rol)) return null
   return { id: data.id, nombre: data.nombre, rol: data.rol }
 }
 

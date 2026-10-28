@@ -48,6 +48,12 @@ describe('iniciarSesion con Supabase', () => {
     expect(auth.signOut).toHaveBeenCalled()
   })
 
+  it('cierra la sesión si el perfil trae un rol desconocido', async () => {
+    perfil = { data: { id: 'u1', nombre: 'Starlyn', rol: 'superadmin', activo: true }, error: null }
+    await expect(iniciarSesion(credenciales)).rejects.toBeInstanceOf(CuentaSinAccesoError)
+    expect(auth.signOut).toHaveBeenCalled()
+  })
+
   it('cierra la sesión si el usuario no tiene perfil', async () => {
     perfil = { data: null, error: null }
     await expect(iniciarSesion(credenciales)).rejects.toBeInstanceOf(CuentaSinAccesoError)
