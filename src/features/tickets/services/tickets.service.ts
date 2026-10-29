@@ -1,4 +1,5 @@
 import { calcularPrioridad, SLA_HORAS } from '@/lib/prioridad'
+import { supabase } from '@/lib/supabase'
 import {
   actividadInicial,
   CATEGORIAS_POR_TECNICO,
@@ -17,11 +18,14 @@ import type {
   TicketDetalle,
   TicketEstado,
 } from '../types/ticket.types'
+import { crearServicioSupabase } from './tickets.supabase'
 
 // Capa de acceso a datos del módulo de tickets.
-// Hoy trabaja en memoria con datos de prueba. Para conectar Supabase se
-// reemplaza el cuerpo de cada función por la consulta real (y el mapeo
-// snake_case → camelCase); los hooks y las pantallas no cambian.
+// Con Supabase configurado (.env.local), cada función usa la consulta real de
+// tickets.supabase.ts; sin él, trabaja en memoria con datos de prueba (modo
+// demo). Los hooks y las pantallas no cambian.
+
+const remoto = supabase ? crearServicioSupabase(supabase) : null
 
 const LATENCIA_MS = 350
 
@@ -49,11 +53,13 @@ function registrar(ticketId: number, evento: Omit<ActividadTicket, 'id' | 'ticke
 }
 
 export async function listarTickets(): Promise<Ticket[]> {
+  if (remoto) return remoto.listarTickets()
   await esperar()
   return copiar(db.tickets)
 }
 
 export async function obtenerTicket(id: number): Promise<TicketDetalle | null> {
+  if (remoto) return remoto.obtenerTicket(id)
   await esperar()
   const ticket = db.tickets.find((t) => t.id === id)
   if (!ticket) return null
@@ -65,16 +71,19 @@ export async function obtenerTicket(id: number): Promise<TicketDetalle | null> {
 }
 
 export async function categoriasDelTecnico(tecnicoId: string): Promise<CategoriaNombre[]> {
+  if (remoto) return remoto.categoriasDelTecnico(tecnicoId)
   await esperar()
   return [...(CATEGORIAS_POR_TECNICO[tecnicoId] ?? [])]
 }
 
 export async function listarServicios(): Promise<ServicioResumen[]> {
+  if (remoto) return remoto.listarServicios()
   await esperar()
   return copiar(SERVICIOS_MOCK)
 }
 
 export async function crearTicket(input: NuevoTicketInput, autor: PersonaResumen): Promise<Ticket> {
+  if (remoto) return remoto.crearTicket(input, autor)
   await esperar()
   const ahora = ahoraIso()
   const servicio = SERVICIOS_MOCK.find((s) => s.id === input.servicioId) ?? null
@@ -118,6 +127,7 @@ export async function cambiarEstado(
   autor: PersonaResumen,
   solucion?: string,
 ): Promise<Ticket> {
+  if (remoto) return remoto.cambiarEstado(id, estado, autor, solucion)
   await esperar()
   const ticket = buscar(id)
   const ahora = ahoraIso()
@@ -141,12 +151,14 @@ export async function cambiarEstado(
 }
 
 export async function agregarComentario(id: number, autor: PersonaResumen, contenido: string): Promise<void> {
+  if (remoto) return remoto.agregarComentario(id, autor, contenido)
   await esperar()
   buscar(id)
   registrar(id, { tipo: 'comentario', autor: autor.nombre, descripcion: 'comentó', comentario: contenido.trim() })
 }
 
 export async function tomarTicket(id: number, tecnico: PersonaResumen): Promise<Ticket> {
+  if (remoto) return remoto.tomarTicket(id, tecnico)
   await esperar()
   const ticket = buscar(id)
   if (ticket.asignadoA) throw new Error('Otro técnico ya tomó este ticket.')

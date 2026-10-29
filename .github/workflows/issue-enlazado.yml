@@ -1,0 +1,30 @@
+# Revisa que cada PR hacia develop esté enlazado a una tarea del tablero: un
+# issue abierto de este repositorio que esté en el proyecto "Tablero ITicket".
+# Con "Closes #N" la tarjeta se mueve sola a "En revisión" y, al mergear, a
+# "Hecho". Los PR de develop a main no lo necesitan.
+name: Issue enlazado
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [develop]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  issue-enlazado:
+    name: Issue enlazado
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Revisar que el PR esté enlazado a una tarea del tablero
+        env:
+          DESCRIPCION: ${{ github.event.pull_request.body }}
+          REPOSITORIO: ${{ github.repository }}
+          PROYECTO: 4
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/verificar-issue.sh

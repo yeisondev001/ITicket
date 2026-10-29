@@ -4,7 +4,7 @@ import type { CredencialesLogin } from '../lib/validacionLogin'
 
 export interface AuthContextValor {
   usuario: UsuarioActual | null
-  cargando: boolean
+  cargando: boolean // recuperando la sesión al abrir la página
   iniciarSesion: (credenciales: CredencialesLogin) => Promise<UsuarioActual>
   cerrarSesion: () => Promise<void>
 }

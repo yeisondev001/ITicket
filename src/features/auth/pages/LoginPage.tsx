@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { EstadoCarga } from '@/components/feedback/EstadoCarga'
+import { usaSupabase } from '@/lib/supabase'
+import { CONTRASENA_DEMO, CUENTAS_DEMO } from '../data/cuentas.mock'
 import { validarLogin, type CredencialesLogin, type ErroresLogin } from '../lib/validacionLogin'
 import { useAuth } from '../context/useAuth'
 import { rutaInicialPorRol } from '../lib/rutaInicial'
@@ -16,28 +19,26 @@ const PUNTOS = [
 ]
 
 export function LoginPage() {
-    const ubicacion = useLocation()
-    const { usuario, iniciarSesion, cargando } = useAuth()
-    const [valores, setValores] = useState<CredencialesLogin>({ correo: '', contrasena: '' })
-    const [errores, setErrores] = useState<ErroresLogin>({})
-    const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
-    const [enviando, setEnviando] = useState(false)
-    const [verContrasena, setVerContrasena] = useState(false)
-
-    if (cargando) {
-        return (
-            <div className="grid min-h-svh place-items-center" role="status">
-                Comprobando sesión…
-            </div>
-        )
-    }
-
+  const ubicacion = useLocation()
+  const { usuario, cargando, iniciarSesion } = useAuth()
+  const [valores, setValores] = useState<CredencialesLogin>({ correo: '', contrasena: '' })
+  const [errores, setErrores] = useState<ErroresLogin>({})
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const [verContrasena, setVerContrasena] = useState(false)
 
   // Con sesión iniciada (o al entrar), vuelve a la página que pidió antes del
   // login o, si no hay, a la pantalla inicial de su rol.
   if (usuario) {
     const desde = (ubicacion.state as { desde?: string } | null)?.desde
     return <Navigate to={desde ?? rutaInicialPorRol(usuario.rol)} replace />
+  }
+  if (cargando) {
+    return (
+      <div className="flex min-h-svh items-center justify-center">
+        <EstadoCarga texto="Recuperando tu sesión…" />
+      </div>
+    )
   }
 
   const enviar = async (evento: FormEvent<HTMLFormElement>) => {
@@ -163,6 +164,21 @@ export function LoginPage() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Solo en modo demo: con Supabase, las cuentas las crea el administrador. */}
+          {!usaSupabase && (
+            <details className="rounded-lg border bg-card px-4 py-3 text-sm">
+              <summary className="cursor-pointer font-medium">Cuentas de prueba</summary>
+              <p className="mt-2 text-muted-foreground">
+                Contraseña para todas: <code className="font-mono text-foreground">{CONTRASENA_DEMO}</code>
+              </p>
+              <ul className="mt-2 flex flex-col gap-1 font-mono text-xs">
+                {CUENTAS_DEMO.map((c) => (
+                  <li key={c.correo}>{c.correo}</li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       </main>
     </div>
