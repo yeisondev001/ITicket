@@ -170,3 +170,12 @@ export async function tomarTicket(id: number, tecnico: PersonaResumen): Promise<
   registrar(id, { tipo: 'asignado', autor: tecnico.nombre, descripcion: 'tomó el ticket' })
   return copiar(ticket)
 }
+
+export async function eliminarTicket(id: number): Promise<void> {
+  if (remoto) return remoto.eliminarTicket(id)
+  await esperar()
+  buscar(id)
+  db.tickets = db.tickets.filter((t) => t.id !== id)
+  db.clasificaciones = db.clasificaciones.filter((c) => c.ticketId !== id)
+  db.actividad.delete(id)
+}
