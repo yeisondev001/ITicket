@@ -112,4 +112,68 @@ describe('servicio de tickets con Supabase', () => {
       'Tu rol no tiene permiso para hacer esta acción.',
     )
   })
+
+  it('lista los tickets más recientes primero, ya convertidos', async () => {
+    const { db, llamadas } = clienteFalso({ tickets: { data: [fila], error: null } })
+    const tickets = await crearServicioSupabase(db).listarTickets()
+    expect(tickets[0]).toMatchObject({ id: 1, categoria: 'red', creadoPor: { id: 'u1', nombre: 'María' } })
+    expect(llamadas.find((l) => l.metodo === 'order')?.args).toEqual(['created_at', { ascending: false }])
+  })
+
+  it('si la consulta falla, muestra un mensaje claro y no el error técnico', async () => {
+    const { db } = clienteFalso({ tickets: { data: null, error: { code: 'XX000', message: 'detalle interno' } } })
+    await expect(crearServicioSupabase(db).listarTickets()).rejects.toThrow('Ocurrió un error inesperado.')
+  })
+
+  it('el detalle de un ticket que no existe o que RLS oculta es null', async () => {
+    const { db } = clienteFalso({ tickets: { data: null, error: null } })
+    await expect(crearServicioSupabase(db).obtenerTicket(99)).resolves.toBeNull()
+  })
+
+  it('el detalle incluye el historial con los comentarios', async () => {
+    const comentario = { id: 5, ticket_id: 1, contenido: 'Revisado', created_at: '2026-10-22T11:00:00Z', autor: { nombre: 'Ana' } }
+    const { db } = clienteFalso({
+      tickets: { data: fila, error: null },
+      comentarios: { data: [comentario], error: null },
+    })
+    const detalle = await crearServicioSupabase(db).obtenerTicket(1)
+    expect(detalle?.clasificacion).toBeNull()
+    expect(detalle?.actividad.map((a) => a.tipo)).toEqual(['creado', 'comentario'])
+  })
+
+  it('devuelve las categorías que cubre el técnico', async () => {
+    const { db } = clienteFalso({
+      tecnico_categorias: {
+        data: [{ categoria: { nombre: 'red' } }, { categoria: { nombre: 'hardware' } }, { categoria: null }],
+        error: null,
+      },
+    })
+    await expect(crearServicioSupabase(db).categoriasDelTecnico('t1')).resolves.toEqual(['red', 'hardware'])
+  })
+
+  it('al cerrar guarda la fecha de cierre', async () => {
+    const { db, llamadas } = clienteFalso({ tickets: { data: { ...fila, estado: 'cerrado' }, error: null } })
+    await crearServicioSupabase(db).cambiarEstado(1, 'cerrado', { id: 't1', nombre: 'Starlyn' })
+    const cambios = llamadas.find((l) => l.metodo === 'update')?.args[0] as Record<string, unknown>
+    expect(cambios.estado).toBe('cerrado')
+    expect(typeof cambios.cerrado_en).toBe('string')
+  })
+
+  it('comenta a nombre del autor, con el texto limpio', async () => {
+    const { db, llamadas } = clienteFalso({ comentarios: { data: null, error: null } })
+    await crearServicioSupabase(db).agregarComentario(1, { id: 't1', nombre: 'Starlyn' }, '  Voy en camino ')
+    expect(llamadas.find((l) => l.metodo === 'insert')?.args[0]).toEqual({
+      ticket_id: 1,
+      autor_id: 't1',
+      contenido: 'Voy en camino',
+    })
+  })
+
+  it('tomar un ticket lo asigna al técnico y guarda la fecha', async () => {
+    const { db, llamadas } = clienteFalso({ tickets: { data: fila, error: null } })
+    await crearServicioSupabase(db).tomarTicket(1, { id: 't1', nombre: 'Starlyn' })
+    const cambios = llamadas.find((l) => l.metodo === 'update')?.args[0] as Record<string, unknown>
+    expect(cambios).toMatchObject({ asignado_a: 't1', estado: 'asignado' })
+    expect(typeof cambios.asignado_en).toBe('string')
+  })
 })
