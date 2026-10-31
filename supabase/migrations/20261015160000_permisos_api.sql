@@ -10,8 +10,15 @@ grant select, insert, update, delete on
   public.categorias,
   public.tecnico_categorias,
   public.tickets,
-  public.comentarios
+  public.comentarios,
 to authenticated;
+
+-- Permisos de lectura para el catálogo usado por el frontend.
+GRANT USAGE ON SCHEMA public TO authenticated;
+
+GRANT SELECT
+ON TABLE public.servicios, public.playbooks
+TO authenticated;
 
 -- Nadie desde la API puede vaciar tablas: TRUNCATE no pasa por RLS.
 revoke truncate on
@@ -19,7 +26,9 @@ revoke truncate on
   public.categorias,
   public.tecnico_categorias,
   public.tickets,
-  public.comentarios
+  public.comentarios,
+  public.servicios,
+  public.playbooks
 from anon, authenticated;
 
 -- Dos triggers en auth.users crean el perfil del usuario nuevo; se deja solo

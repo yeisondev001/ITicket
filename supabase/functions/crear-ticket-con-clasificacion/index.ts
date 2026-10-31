@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from '@supabase/supabase-js'
 
 const CATEGORIAS = ['red', 'hardware', 'software', 'accesos', 'correo', 'seguridad', 'otro'] as const
 const IMPACTOS = ['alto', 'medio', 'bajo'] as const

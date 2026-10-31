@@ -3,6 +3,8 @@ import type {
   CategoriaNombre,
   Impacto,
   PersonaResumen,
+  ServicioDetalle,
+  Playbook,
   Ticket,
   TicketEstado,
   TicketOrigen,
@@ -47,6 +49,23 @@ export interface FilaComentario {
   autor: Relacion<{ nombre: string }>
 }
 
+export interface FilaPlaybook {
+    id: number
+    servicio_id: number
+    titulo: string
+    pasos: string
+    updated_at: string
+}
+export interface FilaServicio {
+    id: number
+    nombre: string
+    descripcion: string | null
+    es_critico: boolean
+    rto_minutos: number
+    rpo_minutos: number
+    playbook: Relacion<FilaPlaybook>
+}
+
 // Columnas que pide el servicio. Los nombres de las llaves foráneas indican
 // cuál de las dos relaciones con perfiles se quiere.
 export const COLUMNAS_TICKET = `
@@ -56,6 +75,22 @@ export const COLUMNAS_TICKET = `
   categoria:categorias(nombre),
   creador:perfiles!tickets_creado_por_fkey(id, nombre),
   asignado:perfiles!tickets_asignado_a_fkey(id, nombre)
+`
+
+export const COLUMNAS_SERVICIO = `
+  id,
+  nombre,
+  descripcion,
+  es_critico,
+  rto_minutos,
+  rpo_minutos,
+  playbook:playbooks(
+    id,
+    servicio_id,
+    titulo,
+    pasos,
+    updated_at
+  )
 `
 
 function una<T>(relacion: Relacion<T>): T | null {
@@ -90,6 +125,30 @@ export function mapearTicket(fila: FilaTicket): Ticket {
     cerradoEn: fila.cerrado_en,
     updatedAt: fila.updated_at,
   }
+}
+
+export function mapearServicio(fila: FilaServicio): ServicioDetalle {
+    const playbook = una(fila.playbook)
+
+    return {
+        resumen: {
+            id: fila.id,
+            nombre: fila.nombre,
+            esCritico: fila.es_critico
+        },
+        descripcion: fila.descripcion,
+        rtoMinutos: fila.rto_minutos,
+        rpoMinutos: fila.rpo_minutos,
+        playbook: playbook
+            ? {
+                id: playbook.id,
+                servicioId: playbook.servicio_id,
+                titulo: playbook.titulo,
+                pasos: playbook.pasos,
+                updatedAt: playbook.updated_at,
+            }
+            : null,
+    }
 }
 
 // Historial del ticket a partir de sus fechas y comentarios. La bitácora

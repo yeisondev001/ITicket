@@ -19,6 +19,31 @@ export interface ServicioResumen {
   esCritico: boolean
 }
 
+export interface ServicioDetalle {
+    resumen: ServicioResumen
+    descripcion: string | null
+    rtoMinutos: number
+    rpoMinutos: number
+    playbook: Playbook | null
+}
+
+export interface NuevoServicioInput {
+    nombre: string
+    descripcion: string | null
+    esCritico: boolean
+    rtoMinutos: number
+    rpoMinutos: number
+    playbook: Playbook | null
+}
+
+export interface Playbook {
+    id: number
+    servicioId: number
+    titulo: string | null
+    pasos: string 
+    updatedAt: string
+}
+
 export interface PersonaResumen {
   id: string
   nombre: string

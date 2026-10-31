@@ -34,3 +34,5 @@ npm-debug.log*
 
 # Visual Studio
 /.vs/
+/supabase/config.toml
+/supabase/config.toml

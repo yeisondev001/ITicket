@@ -28,3 +28,10 @@ export class ErrorDeDatos extends Error {
     this.name = 'ErrorDeDatos'
   }
 }
+
+export class ErrorDeSupabaseConfig extends Error {
+    constructor(error: unknown) {
+        super(mensajeDeError(error))
+        this.name = 'ErrorDeSupabaseConfiguration'
+    }
+}
