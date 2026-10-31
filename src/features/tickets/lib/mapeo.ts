@@ -4,7 +4,6 @@ import type {
   Impacto,
   PersonaResumen,
   ServicioDetalle,
-  Playbook,
   Ticket,
   TicketEstado,
   TicketOrigen,
