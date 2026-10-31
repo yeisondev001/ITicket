@@ -3,6 +3,7 @@ begin;
 -- Los permisos de authenticated vienen de la migración permisos_api; anon
 -- solo recibe SELECT aquí para comprobar que RLS no le muestra nada.
 GRANT SELECT ON public.tickets TO anon;
+GRANT INSERT ON public.comentarios TO authenticated;
 
 create extension if not exists "basejump@supabase_test_helpers";
 select plan(31);
