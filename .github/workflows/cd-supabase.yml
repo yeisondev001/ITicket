@@ -44,16 +44,17 @@ jobs:
       - uses: supabase/setup-cli@v1
         if: steps.config.outputs.listo == 'true'
         with:
-          version: latest
+          # Versión fija: una versión nueva del CLI no debe cambiar el CD sin aviso.
+          version: 3.0.0
 
       - name: Desplegar base de datos (migraciones)
         if: steps.config.outputs.listo == 'true'
         run: |
-          supabase link --project-ref "$SUPABASE_PROJECT_REF"
-          # --linked: desde la versión nueva del CLI, sin esta opción db push
-          # apunta a una base de datos local en vez del proyecto de Supabase.
-          supabase db push --linked
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
+          # --remote: el proyecto enlazado (sin esto apunta a una base local).
+          # --yes: en el CI nadie puede confirmar a mano.
+          supabase db push --remote --yes
 
       - name: Desplegar Edge Functions
         if: steps.config.outputs.listo == 'true' && hashFiles('supabase/functions/**') != ''
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        run: supabase functions deploy --yes
