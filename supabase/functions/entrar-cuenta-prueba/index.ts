@@ -34,10 +34,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
 
-  if (Deno.env.get("ACCESO_PRUEBA_HABILITADO") !== "si") {
+  // Acepta "si", "Si", "sí"... con espacios o saltos de línea de sobra.
+  const habilitado = (Deno.env.get("ACCESO_PRUEBA_HABILITADO") ?? "").trim().toLowerCase();
+  if (habilitado !== "si" && habilitado !== "sí") {
     return json({ error: "El acceso de prueba está apagado" }, 403);
   }
-  const contrasena = Deno.env.get("CUENTAS_PRUEBA_CONTRASENA");
+  // Quita el salto de línea que queda si se dio Enter al guardar el secret.
+  const contrasena = Deno.env.get("CUENTAS_PRUEBA_CONTRASENA")?.replace(/[\r\n]+$/, "");
   if (!contrasena) return json({ error: "Falta CUENTAS_PRUEBA_CONTRASENA en los Secrets" }, 503);
 
   try {
