@@ -100,7 +100,6 @@ test.describe('Login y módulo de tickets', () => {
 
     await page.getByLabel('Título').fill('No funciona el correo en Finanzas')
     await page.getByLabel('Descripción').fill('Desde las 9:00 nadie en Finanzas puede enviar correos.')
-    await page.getByLabel('Servicio afectado').selectOption({ label: 'Correo electrónico (crítico)' })
     await page.getByRole('button', { name: 'Crear ticket' }).click()
     await expect(page.getByRole('heading', { name: /Ticket TCK-\d+ creado/ })).toBeVisible()
     await page.screenshot({ path: `${CAPTURAS}/06-nuevo-ticket-confirmacion.png`, fullPage: true })

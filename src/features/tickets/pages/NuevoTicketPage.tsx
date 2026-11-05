@@ -8,7 +8,6 @@ import { SLA_HORAS } from '@/lib/prioridad'
 import { PriorityBadge } from '../components/PriorityBadge'
 import { StatusBadge } from '../components/StatusBadge'
 import { TicketForm } from '../components/TicketForm'
-import { useServicios } from '../hooks/useServicios'
 import { codigoTicket, PRIORIDADES } from '../lib/etiquetas'
 import { crearTicket } from '../services/tickets.service'
 import type { NuevoTicketInput, Ticket } from '../types/ticket.types'
@@ -22,7 +21,6 @@ const PASOS = [
 
 export function NuevoTicketPage() {
   const usuario = useUsuarioActual()
-  const { servicios } = useServicios()
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [creado, setCreado] = useState<Ticket | null>(null)
@@ -69,10 +67,6 @@ export function NuevoTicketPage() {
                     <dd><StatusBadge estado={creado.estado} /></dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Servicio</dt>
-                    <dd>{creado.servicio?.nombre ?? 'No indicado'}</dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
                     <dt className="text-muted-foreground">Clasificación IA</dt>
                     <dd>Pendiente</dd>
                   </div>
@@ -94,7 +88,7 @@ export function NuevoTicketPage() {
                 </div>
               </section>
             ) : (
-              <TicketForm key={intento} servicios={servicios} enviando={enviando} error={error} onSubmit={crear} />
+              <TicketForm key={intento} enviando={enviando} error={error} onSubmit={crear} />
             )}
           </CardContent>
         </Card>
