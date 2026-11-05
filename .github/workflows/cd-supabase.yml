@@ -50,7 +50,9 @@ jobs:
         if: steps.config.outputs.listo == 'true'
         run: |
           supabase link --project-ref "$SUPABASE_PROJECT_REF"
-          supabase db push
+          # --linked: desde la versión nueva del CLI, sin esta opción db push
+          # apunta a una base de datos local en vez del proyecto de Supabase.
+          supabase db push --linked
 
       - name: Desplegar Edge Functions
         if: steps.config.outputs.listo == 'true' && hashFiles('supabase/functions/**') != ''
