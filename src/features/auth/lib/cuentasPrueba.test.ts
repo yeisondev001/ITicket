@@ -10,7 +10,7 @@ describe('cuentasDePrueba', () => {
     expect(r.cuentas.length).toBeGreaterThan(0)
   })
 
-  it('con Supabase en desarrollo muestra las cuentas de acceso rápido y la contraseña de .env.local', () => {
+  it('con Supabase en desarrollo muestra una cuenta por rol y la contraseña de .env.local', () => {
     const r = cuentasDePrueba({
       usaSupabase: true,
       desarrollo: true,
@@ -19,7 +19,7 @@ describe('cuentasDePrueba', () => {
     })
     expect(r.visible).toBe(true)
     expect(r.cuentas).toEqual(CUENTAS_PRUEBA_SUPABASE)
-    expect(r.cuentas.map((c) => c.rol)).toEqual(['usuario', 'tecnico', 'supervisor'])
+    expect(r.cuentas.map((c) => c.rol)).toEqual(['usuario', 'tecnico', 'supervisor', 'administrador'])
     expect(r.contrasena).toBe('clave-local')
   })
 
@@ -31,9 +31,5 @@ describe('cuentasDePrueba', () => {
   it('en la versión publicada con Supabase no muestra ninguna cuenta', () => {
     const r = cuentasDePrueba({ usaSupabase: true, desarrollo: false, contrasenaLocal: 'no-debe-salir' })
     expect(r).toEqual({ visible: false, cuentas: [], contrasena: null })
-  })
-
-  it('el administrador no tiene acceso rápido', () => {
-    expect(CUENTAS_PRUEBA_SUPABASE.some((c) => c.rol === 'administrador')).toBe(false)
   })
 })
