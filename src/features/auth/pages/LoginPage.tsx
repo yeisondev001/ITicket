@@ -183,12 +183,6 @@ export function LoginPage() {
           {PRUEBAS.visible && (
             <details className="rounded-lg border bg-card px-4 py-3 text-sm">
               <summary className="cursor-pointer font-medium">Cuentas de prueba</summary>
-              {!PRUEBAS.contrasena && (
-                <p className="mt-2 text-muted-foreground">
-                  Pide la contraseña al líder del equipo y ponla en tu <code className="font-mono">.env.local</code>{' '}
-                  como <code className="font-mono">VITE_CUENTAS_PRUEBA_CONTRASENA</code>.
-                </p>
-              )}
               <ul className="mt-2 flex flex-col gap-1.5">
                 {PRUEBAS.cuentas.map((c) => (
                   <li key={c.correo} className="flex items-center justify-between gap-3">
@@ -196,24 +190,29 @@ export function LoginPage() {
                       <span className="block truncate font-mono text-xs">{c.correo}</span>
                       <span className="text-xs text-muted-foreground">{ROL_ETIQUETA[c.rol]}</span>
                     </span>
-                    {PRUEBAS.contrasena && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={enviando}
-                        aria-label={`Entrar como ${c.correo}`}
-                        onClick={() => {
-                          const credenciales = { correo: c.correo, contrasena: PRUEBAS.contrasena ?? '' }
-                          setValores(credenciales)
-                          setErrores({})
-                          setErrorGeneral(null)
-                          void entrar(credenciales)
-                        }}
-                      >
-                        Entrar
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={enviando}
+                      aria-label={`Entrar como ${c.correo}`}
+                      onClick={() => {
+                        setErrores({})
+                        setErrorGeneral(null)
+                        // Con la contraseña en .env.local entra directo; sin ella,
+                        // llena el correo y deja el cursor en la contraseña.
+                        if (!PRUEBAS.contrasena) {
+                          setValores({ correo: c.correo, contrasena: '' })
+                          document.getElementById('contrasena')?.focus()
+                          return
+                        }
+                        const credenciales = { correo: c.correo, contrasena: PRUEBAS.contrasena }
+                        setValores(credenciales)
+                        void entrar(credenciales)
+                      }}
+                    >
+                      Entrar
+                    </Button>
                   </li>
                 ))}
               </ul>
