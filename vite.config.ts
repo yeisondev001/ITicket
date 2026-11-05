@@ -16,6 +16,6 @@ export default defineConfig({
     // Excluye explícitamente la carpeta de Playwright y node_modules
     exclude: ['tests/**', 'node_modules/**'],
     // Las pruebas unitarias corren siempre en modo demo, aunque exista .env.local.
-    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_CUENTAS_PRUEBA_CONTRASENA: '' },
   },
 })
