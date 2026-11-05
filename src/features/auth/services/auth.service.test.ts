@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CONTRASENA_DEMO } from '../data/cuentas.mock'
-import { CredencialesInvalidasError, iniciarSesion } from './auth.service'
+import { CredencialesInvalidasError, iniciarSesion, iniciarSesionDePrueba } from './auth.service'
 
 describe('iniciarSesion', () => {
   it('devuelve el usuario con su rol si las credenciales son correctas', async () => {
@@ -23,5 +23,12 @@ describe('iniciarSesion', () => {
     await expect(iniciarSesion({ correo: 'nadie@iticket.dev', contrasena: CONTRASENA_DEMO })).rejects.toBeInstanceOf(
       CredencialesInvalidasError,
     )
+  })
+})
+
+describe('iniciarSesionDePrueba', () => {
+  it('en modo demo entra directo con la cuenta elegida', async () => {
+    const usuario = await iniciarSesionDePrueba('usuario@iticket.dev')
+    expect(usuario.rol).toBe('usuario')
   })
 })

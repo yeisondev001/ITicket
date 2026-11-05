@@ -13,12 +13,11 @@ import { validarLogin, type CredencialesLogin, type ErroresLogin } from '../lib/
 import { useAuth } from '../context/useAuth'
 import { rutaInicialPorRol } from '../lib/rutaInicial'
 
-// Las cuentas reales y la contraseña de .env.local solo se usan en desarrollo:
-// en la versión publicada esas ramas se eliminan al compilar y no llegan al navegador.
+// Las cuentas de prueba de Supabase solo se muestran en desarrollo: en la
+// versión publicada esa rama se elimina al compilar y no llega al navegador.
 const PRUEBAS = cuentasDePrueba({
   usaSupabase,
   desarrollo: import.meta.env.DEV,
-  contrasenaLocal: import.meta.env.DEV ? import.meta.env.VITE_CUENTAS_PRUEBA_CONTRASENA : undefined,
   cuentasSupabase: import.meta.env.DEV ? CUENTAS_PRUEBA_SUPABASE : [],
 })
 
@@ -30,7 +29,7 @@ const PUNTOS = [
 
 export function LoginPage() {
   const ubicacion = useLocation()
-  const { usuario, cargando, iniciarSesion } = useAuth()
+  const { usuario, cargando, iniciarSesion, iniciarSesionDePrueba } = useAuth()
   const [valores, setValores] = useState<CredencialesLogin>({ correo: '', contrasena: '' })
   const [errores, setErrores] = useState<ErroresLogin>({})
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
@@ -60,13 +59,13 @@ export function LoginPage() {
       document.getElementById(encontrados.correo ? 'correo' : 'contrasena')?.focus()
       return
     }
-    await entrar(valores)
+    await entrar(() => iniciarSesion(valores))
   }
 
-  const entrar = async (credenciales: CredencialesLogin) => {
+  const entrar = async (accion: () => Promise<unknown>) => {
     setEnviando(true)
     try {
-      await iniciarSesion(credenciales) // al guardar la sesión, la redirección de arriba se encarga
+      await accion() // al guardar la sesión, la redirección de arriba se encarga
     } catch (e) {
       setErrorGeneral(e instanceof Error ? e.message : 'No se pudo iniciar sesión. Intenta de nuevo.')
     } finally {
@@ -199,16 +198,7 @@ export function LoginPage() {
                       onClick={() => {
                         setErrores({})
                         setErrorGeneral(null)
-                        // Con la contraseña en .env.local entra directo; sin ella,
-                        // llena el correo y deja el cursor en la contraseña.
-                        if (!PRUEBAS.contrasena) {
-                          setValores({ correo: c.correo, contrasena: '' })
-                          document.getElementById('contrasena')?.focus()
-                          return
-                        }
-                        const credenciales = { correo: c.correo, contrasena: PRUEBAS.contrasena }
-                        setValores(credenciales)
-                        void entrar(credenciales)
+                        void entrar(() => iniciarSesionDePrueba(c.correo))
                       }}
                     >
                       Entrar
