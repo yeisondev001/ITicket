@@ -1,15 +1,14 @@
 import type { Rol } from '@/types/usuario'
 import { CONTRASENA_DEMO, CUENTAS_DEMO } from '../data/cuentas.mock'
 
-// Cuentas de prueba del proyecto de Supabase de pruebas con acceso rápido. Los
+// Cuentas de prueba del proyecto de Supabase de pruebas, una por rol. Los
 // correos no son secretos; la contraseña nunca va en el código: cada integrante
 // la pone en su .env.local (VITE_CUENTAS_PRUEBA_CONTRASENA).
-// El administrador no está a propósito: puede borrar tickets y cambiar roles,
-// así que para entrar como admin se escriben el correo y la contraseña.
 export const CUENTAS_PRUEBA_SUPABASE: { correo: string; rol: Rol }[] = [
   { correo: 'usuario@iticket.dev', rol: 'usuario' },
   { correo: 'tecnico@iticket.dev', rol: 'tecnico' },
   { correo: 'supervisor@iticket.dev', rol: 'supervisor' },
+  { correo: 'admin@iticket.dev', rol: 'administrador' },
 ]
 
 export interface CuentasDePrueba {
