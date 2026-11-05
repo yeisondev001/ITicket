@@ -60,9 +60,13 @@ export function LoginPage() {
       document.getElementById(encontrados.correo ? 'correo' : 'contrasena')?.focus()
       return
     }
+    await entrar(valores)
+  }
+
+  const entrar = async (credenciales: CredencialesLogin) => {
     setEnviando(true)
     try {
-      await iniciarSesion(valores) // al guardar la sesión, la redirección de arriba se encarga
+      await iniciarSesion(credenciales) // al guardar la sesión, la redirección de arriba se encarga
     } catch (e) {
       setErrorGeneral(e instanceof Error ? e.message : 'No se pudo iniciar sesión. Intenta de nuevo.')
     } finally {
@@ -197,14 +201,17 @@ export function LoginPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        aria-label={`Usar la cuenta ${c.correo}`}
+                        disabled={enviando}
+                        aria-label={`Entrar como ${c.correo}`}
                         onClick={() => {
-                          setValores({ correo: c.correo, contrasena: PRUEBAS.contrasena ?? '' })
+                          const credenciales = { correo: c.correo, contrasena: PRUEBAS.contrasena ?? '' }
+                          setValores(credenciales)
                           setErrores({})
                           setErrorGeneral(null)
+                          void entrar(credenciales)
                         }}
                       >
-                        Usar
+                        Entrar
                       </Button>
                     )}
                   </li>
