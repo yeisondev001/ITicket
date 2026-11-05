@@ -89,6 +89,26 @@ export async function iniciarSesion({ correo, contrasena }: CredencialesLogin): 
   return usuario
 }
 
+// Acceso rápido a una cuenta de prueba. Con Supabase, la contraseña la pone el
+// servidor (Edge Function entrar-cuenta-prueba): desde aquí solo viaja el correo.
+export async function iniciarSesionDePrueba(correo: string): Promise<UsuarioActual> {
+  if (!supabase) return iniciarSesion({ correo, contrasena: CONTRASENA_DEMO })
+
+  const { data, error } = await supabase.functions.invoke('entrar-cuenta-prueba', { body: { correo } })
+  if (error || !data?.access_token || !data?.refresh_token) {
+    throw new Error('No se pudo entrar con la cuenta de prueba. Revisa que el acceso de prueba esté activo en Supabase.')
+  }
+  const sesion = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token })
+  if (sesion.error || !sesion.data.user) throw new Error('No se pudo abrir la sesión de prueba. Intenta de nuevo.')
+
+  const usuario = await leerPerfil(sesion.data.user.id)
+  if (!usuario) {
+    await supabase.auth.signOut()
+    throw new CuentaSinAccesoError()
+  }
+  return usuario
+}
+
 export async function cerrarSesion(): Promise<void> {
   if (supabase) await supabase.auth.signOut()
   guardar(null)

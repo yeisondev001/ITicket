@@ -5,16 +5,24 @@ const auth = {
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
   getSession: vi.fn(),
+  setSession: vi.fn(),
 }
+const functions = { invoke: vi.fn() }
 let perfil: { data: unknown; error: unknown } = { data: null, error: null }
 const from = vi.fn(() => ({
   select: () => ({ eq: () => ({ maybeSingle: async () => perfil }) }),
 }))
 
-vi.mock('@/lib/supabase', () => ({ supabase: { auth, from }, usaSupabase: true }))
+vi.mock('@/lib/supabase', () => ({ supabase: { auth, from, functions }, usaSupabase: true }))
 
-const { iniciarSesion, restaurarSesion, cerrarSesion, CredencialesInvalidasError, CuentaSinAccesoError } =
-  await import('./auth.service')
+const {
+  iniciarSesion,
+  iniciarSesionDePrueba,
+  restaurarSesion,
+  cerrarSesion,
+  CredencialesInvalidasError,
+  CuentaSinAccesoError,
+} = await import('./auth.service')
 
 const credenciales = { correo: '  Tecnico@ITicket.dev ', contrasena: 'secreta' }
 
@@ -22,6 +30,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   perfil = { data: { id: 'u1', nombre: 'Starlyn', rol: 'tecnico', activo: true }, error: null }
   auth.signInWithPassword.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+  functions.invoke.mockResolvedValue({ data: { access_token: 'acceso', refresh_token: 'renovar' }, error: null })
+  auth.setSession.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
 })
 
 describe('iniciarSesion con Supabase', () => {
@@ -57,6 +67,28 @@ describe('iniciarSesion con Supabase', () => {
   it('cierra la sesión si el usuario no tiene perfil', async () => {
     perfil = { data: null, error: null }
     await expect(iniciarSesion(credenciales)).rejects.toBeInstanceOf(CuentaSinAccesoError)
+    expect(auth.signOut).toHaveBeenCalled()
+  })
+})
+
+describe('iniciarSesionDePrueba con Supabase', () => {
+  it('pide la sesión al servidor enviando solo el correo', async () => {
+    const usuario = await iniciarSesionDePrueba('tecnico@iticket.dev')
+    expect(functions.invoke).toHaveBeenCalledWith('entrar-cuenta-prueba', { body: { correo: 'tecnico@iticket.dev' } })
+    expect(auth.signInWithPassword).not.toHaveBeenCalled()
+    expect(auth.setSession).toHaveBeenCalledWith({ access_token: 'acceso', refresh_token: 'renovar' })
+    expect(usuario).toEqual({ id: 'u1', nombre: 'Starlyn', rol: 'tecnico' })
+  })
+
+  it('avisa si el acceso de prueba está apagado en el servidor', async () => {
+    functions.invoke.mockResolvedValue({ data: null, error: new Error('403') })
+    await expect(iniciarSesionDePrueba('tecnico@iticket.dev')).rejects.toThrow('acceso de prueba')
+    expect(auth.setSession).not.toHaveBeenCalled()
+  })
+
+  it('cierra la sesión si la cuenta de prueba no tiene perfil activo', async () => {
+    perfil = { data: null, error: null }
+    await expect(iniciarSesionDePrueba('tecnico@iticket.dev')).rejects.toBeInstanceOf(CuentaSinAccesoError)
     expect(auth.signOut).toHaveBeenCalled()
   })
 })
