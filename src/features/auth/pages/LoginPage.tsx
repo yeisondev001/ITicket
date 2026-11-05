@@ -7,10 +7,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { EstadoCarga } from '@/components/feedback/EstadoCarga'
 import { usaSupabase } from '@/lib/supabase'
-import { CONTRASENA_DEMO, CUENTAS_DEMO } from '../data/cuentas.mock'
+import { CUENTAS_PRUEBA_SUPABASE, cuentasDePrueba } from '../lib/cuentasPrueba'
+import { ROL_ETIQUETA } from '@/types/usuario'
 import { validarLogin, type CredencialesLogin, type ErroresLogin } from '../lib/validacionLogin'
 import { useAuth } from '../context/useAuth'
 import { rutaInicialPorRol } from '../lib/rutaInicial'
+
+// Las cuentas reales y la contraseña de .env.local solo se usan en desarrollo:
+// en la versión publicada esas ramas se eliminan al compilar y no llegan al navegador.
+const PRUEBAS = cuentasDePrueba({
+  usaSupabase,
+  desarrollo: import.meta.env.DEV,
+  contrasenaLocal: import.meta.env.DEV ? import.meta.env.VITE_CUENTAS_PRUEBA_CONTRASENA : undefined,
+  cuentasSupabase: import.meta.env.DEV ? CUENTAS_PRUEBA_SUPABASE : [],
+})
 
 const PUNTOS = [
   'Reporta incidentes y sigue su estado en tiempo real.',
@@ -165,16 +175,39 @@ export function LoginPage() {
             </CardContent>
           </Card>
 
-          {/* Solo en modo demo: con Supabase, las cuentas las crea el administrador. */}
-          {!usaSupabase && (
+          {/* Ayuda para el equipo: en modo demo, o con Supabase solo al trabajar en local. */}
+          {PRUEBAS.visible && (
             <details className="rounded-lg border bg-card px-4 py-3 text-sm">
               <summary className="cursor-pointer font-medium">Cuentas de prueba</summary>
-              <p className="mt-2 text-muted-foreground">
-                Contraseña para todas: <code className="font-mono text-foreground">{CONTRASENA_DEMO}</code>
-              </p>
-              <ul className="mt-2 flex flex-col gap-1 font-mono text-xs">
-                {CUENTAS_DEMO.map((c) => (
-                  <li key={c.correo}>{c.correo}</li>
+              {!PRUEBAS.contrasena && (
+                <p className="mt-2 text-muted-foreground">
+                  Pide la contraseña al líder del equipo y ponla en tu <code className="font-mono">.env.local</code>{' '}
+                  como <code className="font-mono">VITE_CUENTAS_PRUEBA_CONTRASENA</code>.
+                </p>
+              )}
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {PRUEBAS.cuentas.map((c) => (
+                  <li key={c.correo} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate font-mono text-xs">{c.correo}</span>
+                      <span className="text-xs text-muted-foreground">{ROL_ETIQUETA[c.rol]}</span>
+                    </span>
+                    {PRUEBAS.contrasena && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        aria-label={`Usar la cuenta ${c.correo}`}
+                        onClick={() => {
+                          setValores({ correo: c.correo, contrasena: PRUEBAS.contrasena ?? '' })
+                          setErrores({})
+                          setErrorGeneral(null)
+                        }}
+                      >
+                        Usar
+                      </Button>
+                    )}
+                  </li>
                 ))}
               </ul>
             </details>
