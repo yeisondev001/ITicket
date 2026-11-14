@@ -211,19 +211,22 @@ export const TICKETS_MOCK: Ticket[] = [
 ]
 
 export const CLASIFICACIONES_MOCK: ClasificacionIA[] = TICKETS_MOCK.map((t, i) => ({
-  id: i + 1,
-  ticketId: t.id,
-  modelo: 'mock',
-  categoria: t.categoria,
-  impacto: t.impacto,
-  urgencia: t.urgencia,
-  prioridad: t.prioridad,
-  confianza: t.requiereRevision ? 0.48 : 0.92,
-  explicacion: t.requiereRevision
-    ? 'La descripción no deja claro cuántas personas se ven afectadas.'
-    : 'La categoría y el alcance se deducen claramente de la descripción.',
-  valida: true,
-  createdAt: t.createdAt,
+    id: i + 1,
+    ticketId: t.id,
+    modelo: 'mock',
+    categoria: t.categoria,
+    impacto: t.impacto,
+    urgencia: t.urgencia,
+    prioridad: t.prioridad,
+    confianza: t.requiereRevision ? 0.48 : 0.92,
+    explicacion: t.requiereRevision
+        ? 'La descripción no deja claro cuántas personas se ven afectadas.'
+        : 'La categoría y el alcance se deducen claramente de la descripción.',
+    valida: true,
+    intento: 1,
+    latenciaMs: 0,
+    error: null,
+    createdAt: t.createdAt,
 }))
 
 export function actividadInicial(t: Ticket): ActividadTicket[] {

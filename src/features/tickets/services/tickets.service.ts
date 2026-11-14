@@ -13,7 +13,6 @@ import type {
   CategoriaNombre,
   NuevoTicketInput,
   PersonaResumen,
-  ServicioResumen,
   Ticket,
   TicketDetalle,
   TicketEstado,
@@ -74,12 +73,6 @@ export async function categoriasDelTecnico(tecnicoId: string): Promise<Categoria
   if (remoto) return remoto.categoriasDelTecnico(tecnicoId)
   await esperar()
   return [...(CATEGORIAS_POR_TECNICO[tecnicoId] ?? [])]
-}
-
-export async function listarServicios(): Promise<ServicioResumen[]> {
-  if (remoto) return remoto.listarServicios()
-  await esperar()
-  return copiar(SERVICIOS_MOCK)
 }
 
 export async function crearTicket(input: NuevoTicketInput, autor: PersonaResumen): Promise<Ticket> {

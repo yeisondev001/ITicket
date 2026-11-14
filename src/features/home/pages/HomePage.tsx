@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { SeccionVacia } from '@/components/SeccionVacia'
 import { buttonVariants } from '@/components/ui/button'
@@ -8,14 +9,15 @@ import { saludoSegunHora } from '../lib/saludo'
 const KPIS = ['Tickets abiertos', 'En proceso', 'Pendientes', 'Resueltos']
 
 export function HomePage() {
-  const usuario = useUsuarioActual()
+   const usuario = useUsuarioActual()
+   const [fechaActual] = useState(() => new Date())
 
-  return (
+   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {saludoSegunHora(new Date())}, {usuario.nombre}
+            {saludoSegunHora(fechaActual)}, {usuario.nombre}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Aquí tienes un resumen de la actividad de soporte.</p>
         </div>

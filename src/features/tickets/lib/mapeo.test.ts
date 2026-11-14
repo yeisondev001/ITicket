@@ -21,6 +21,7 @@ const fila: FilaTicket = {
   cerrado_en: null,
   updated_at: '2026-10-15T10:30:00Z',
   categoria: { nombre: 'hardware' },
+  servicio: null,
   creador: { id: 'u1', nombre: 'María' },
   asignado: [{ id: 't1', nombre: 'Starlyn' }],
 }
