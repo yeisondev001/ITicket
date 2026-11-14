@@ -32,14 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return encontrado
   }, [])
 
+  const iniciarSesionDePrueba = useCallback(async (correo: string) => {
+    const encontrado = await auth.iniciarSesionDePrueba(correo)
+    setUsuario(encontrado)
+    return encontrado
+  }, [])
+
   const cerrarSesion = useCallback(async () => {
     await auth.cerrarSesion()
     setUsuario(null)
   }, [])
 
   const valor = useMemo(
-    () => ({ usuario, cargando, iniciarSesion, cerrarSesion }),
-    [usuario, cargando, iniciarSesion, cerrarSesion],
+    () => ({ usuario, cargando, iniciarSesion, iniciarSesionDePrueba, cerrarSesion }),
+    [usuario, cargando, iniciarSesion, iniciarSesionDePrueba, cerrarSesion],
   )
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>
