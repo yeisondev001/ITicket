@@ -73,37 +73,28 @@ export function crearServicioSupabase(db: SupabaseClient) {
       .filter((n): n is CategoriaNombre => Boolean(n))
   }
 
-    async function crearTicket(input: NuevoTicketInput, _autor: PersonaResumen): Promise<Ticket> {
-        try{// La IA estimará impacto y urgencia (Sprint 3).
+  async function crearTicket(input: NuevoTicketInput, _autor: PersonaResumen): Promise<Ticket> {
+    const categoriaId = await idDeCategoria(input.categoria)
 
-        const categoriaId = await idDeCategoria(input.categoria)
+    const { data, error } = await db.functions.invoke('crear-ticket-con-clasificacion', {
+      body: {
+        titulo: input.titulo.trim(),
+        descripcion: input.descripcion.trim(),
+        servicio_id: input.servicioId,
+        categoria_id: categoriaId,
+      },
+    })
 
-        const { data, error } = await db.functions
-           .invoke('crear-ticket-con-clasificacion',
-            {
-                body: {
-                    titulo: input.titulo.trim(),
-                    descripcion: input.descripcion.trim(),
-                    servicio_id: input.servicioId,
-                    categoria_id: categoriaId,
-                },
-            },
-        )
+    if (error) {
+      console.error('Function error:', error)
+      throw new ErrorDeDatos(error)
+    }
 
-        if(error){
-            throw new Error(error.message || 'No se pudo crear el ticket')
-        }
+    if (!data?.ticket) {
+      throw new Error('La Edge Function no devolvió el ticket creado')
+    }
 
-        if (!data?.ticket) {
-            throw new Error('La Edge Function no devolvió el ticket creado')
-        }
-
-            return data.ticket as Ticket
-        }
-        catch (error) {
-            console.error('Function error:', error)
-            throw new Error(`No se pudo crear el ticket: ${error}`)
-        }
+    return data.ticket as Ticket
   }
 
   async function actualizar(id: number, cambios: Record<string, unknown>): Promise<Ticket> {
