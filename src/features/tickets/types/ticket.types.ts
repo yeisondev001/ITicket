@@ -76,17 +76,20 @@ export interface Ticket {
 
 // Una fila de clasificaciones_ia.
 export interface ClasificacionIA {
-  id: number
-  ticketId: number
-  modelo: string
-  categoria: CategoriaNombre | null
-  impacto: Impacto | null
-  urgencia: Urgencia | null
-  prioridad: TicketPrioridad | null
-  confianza: number // 0 a 1
-  explicacion: string
-  valida: boolean
-  createdAt: string
+    id: number
+    ticketId: number
+    modelo: string
+    categoria: CategoriaNombre | null
+    impacto: Impacto | null
+    urgencia: Urgencia | null
+    prioridad: TicketPrioridad | null
+    confianza: number | null
+    intento: number
+    latenciaMs: number | null
+    explicacion: string
+    error: string | null
+    valida: boolean
+    createdAt: string
 }
 
 export type TipoActividad =

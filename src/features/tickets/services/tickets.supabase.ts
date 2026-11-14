@@ -1,12 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ErrorDeDatos } from '@/lib/errores'
-import { calcularPrioridad, SLA_HORAS } from '@/lib/prioridad'
-import { armarActividad, COLUMNAS_TICKET, mapearTicket, type FilaComentario, type FilaTicket } from '../lib/mapeo'
+import { armarActividad, COLUMNAS_CLASIFICACION_IA, COLUMNAS_TICKET, mapearTicket, mapearClasificacion, type FilaComentario, type FilaTicket, type FilaClasificacionIA } from '../lib/mapeo'
 import type {
   CategoriaNombre,
   NuevoTicketInput,
   PersonaResumen,
-  ServicioResumen,
   Ticket,
   TicketDetalle,
   TicketEstado,
@@ -29,6 +27,8 @@ export function crearServicioSupabase(db: SupabaseClient) {
     return (data as unknown as FilaTicket[]).map(mapearTicket)
   }
 
+
+  
   async function obtenerTicket(id: number): Promise<TicketDetalle | null> {
     const { data, error } = await db.from('tickets').select(COLUMNAS_TICKET).eq('id', id).maybeSingle()
     if (error) throw new ErrorDeDatos(error)
@@ -42,12 +42,28 @@ export function crearServicioSupabase(db: SupabaseClient) {
       .order('created_at')
     if (comentarios.error) throw new ErrorDeDatos(comentarios.error)
 
+    const clasificacion = await db
+    .from('clasificaciones_ia')
+    .select(COLUMNAS_CLASIFICACION_IA)
+    .eq('ticket_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+    if (clasificacion.error) {
+        throw new ErrorDeDatos(clasificacion.error)
+    }
+
     return {
       ticket,
-      clasificacion: null, // la tabla clasificaciones_ia llega con la tarea #18
+
+      clasificacion: clasificacion.data ? mapearClasificacion(clasificacion.data as FilaClasificacionIA) : null, // la tabla clasificaciones_ia llega con la tarea #18
+
       actividad: armarActividad(ticket, comentarios.data as unknown as FilaComentario[]),
     }
   }
+
+
 
   async function categoriasDelTecnico(tecnicoId: string): Promise<CategoriaNombre[]> {
     const { data, error } = await db.from('tecnico_categorias').select('categoria:categorias(nombre)').eq('tecnico_id', tecnicoId)
@@ -57,30 +73,37 @@ export function crearServicioSupabase(db: SupabaseClient) {
       .filter((n): n is CategoriaNombre => Boolean(n))
   }
 
-  async function listarServicios(): Promise<ServicioResumen[]> {
-    return [] // el catálogo de servicios críticos llega con la tarea #23
-  }
+    async function crearTicket(input: NuevoTicketInput, _autor: PersonaResumen): Promise<Ticket> {
+        try{// La IA estimará impacto y urgencia (Sprint 3).
 
-  async function crearTicket(input: NuevoTicketInput, autor: PersonaResumen): Promise<Ticket> {
-    // La IA estimará impacto y urgencia (Sprint 3). Mientras tanto, prioridad
-    // media con la misma regla que usa el modo demo.
-    const prioridad = calcularPrioridad('medio', 'media', { servicioCritico: false })
-    const { data, error } = await db
-      .from('tickets')
-      .insert({
-        titulo: input.titulo.trim(),
-        descripcion: input.descripcion.trim(),
-        origen: 'usuario',
-        creado_por: autor.id,
-        categoria_id: await idDeCategoria(input.categoria),
-        prioridad,
-        requiere_revision: input.categoria === null,
-        sla_vence_en: new Date(Date.now() + SLA_HORAS[prioridad] * 3_600_000).toISOString(),
-      })
-      .select(COLUMNAS_TICKET)
-      .single()
-    if (error) throw new ErrorDeDatos(error)
-    return mapearTicket(data as unknown as FilaTicket)
+        const categoriaId = await idDeCategoria(input.categoria)
+
+        const { data, error } = await db.functions
+           .invoke('crear-ticket-con-clasificacion',
+            {
+                body: {
+                    titulo: input.titulo.trim(),
+                    descripcion: input.descripcion.trim(),
+                    servicio_id: input.servicioId,
+                    categoria_id: categoriaId,
+                },
+            },
+        )
+
+        if(error){
+            throw new Error(error.message || 'No se pudo crear el ticket')
+        }
+
+        if (!data?.ticket) {
+            throw new Error('La Edge Function no devolvió el ticket creado')
+        }
+
+            return data.ticket as Ticket
+        }
+        catch (error) {
+            console.error('Function error:', error)
+            throw new Error(`No se pudo crear el ticket: ${error}`)
+        }
   }
 
   async function actualizar(id: number, cambios: Record<string, unknown>): Promise<Ticket> {
@@ -113,7 +136,6 @@ export function crearServicioSupabase(db: SupabaseClient) {
     listarTickets,
     obtenerTicket,
     categoriasDelTecnico,
-    listarServicios,
     crearTicket,
     cambiarEstado,
     agregarComentario,

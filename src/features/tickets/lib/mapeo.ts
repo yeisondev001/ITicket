@@ -5,6 +5,7 @@ import type {
   PersonaResumen,
   ServicioDetalle,
   Ticket,
+  TicketDetalle,
   TicketEstado,
   TicketOrigen,
   TicketPrioridad,
@@ -17,27 +18,32 @@ import type {
 type Relacion<T> = T | T[] | null
 
 export interface FilaTicket {
-  id: number
-  titulo: string
-  descripcion: string
-  origen: TicketOrigen
-  alerta_id: string | null
-  estado: TicketEstado
-  impacto: Impacto | null
-  urgencia: Urgencia | null
-  prioridad: TicketPrioridad | null
-  requiere_revision: boolean
-  sla_vence_en: string | null
-  nivel_escalamiento: number
-  solucion: string | null
-  created_at: string
-  asignado_en: string | null
-  resuelto_en: string | null
-  cerrado_en: string | null
-  updated_at: string
-  categoria: Relacion<{ nombre: string }>
-  creador: Relacion<PersonaResumen>
-  asignado: Relacion<PersonaResumen>
+    id: number
+    titulo: string
+    descripcion: string
+    origen: TicketOrigen
+    alerta_id: string | null
+    estado: TicketEstado
+    impacto: Impacto | null
+    urgencia: Urgencia | null
+    prioridad: TicketPrioridad | null
+    requiere_revision: boolean
+    sla_vence_en: string | null
+    nivel_escalamiento: number
+    solucion: string | null
+    created_at: string
+    asignado_en: string | null
+    resuelto_en: string | null
+    cerrado_en: string | null
+    updated_at: string
+    categoria: Relacion<{ nombre: string }>
+    servicio: Relacion<{
+        id: number
+        nombre: string
+        es_critico: boolean
+    }>
+    creador: Relacion<PersonaResumen>
+    asignado: Relacion<PersonaResumen>
 }
 
 export interface FilaComentario {
@@ -65,6 +71,25 @@ export interface FilaServicio {
     playbook: Relacion<FilaPlaybook>
 }
 
+export interface FilaClasificacionIA {
+    id: number
+    ticket_id: number
+    modelo: string
+    categoria_id: number | null
+    categoria: Relacion<{ nombre: string }>
+    impacto: Impacto | null
+    urgencia: Urgencia | null
+    prioridad: TicketPrioridad | null
+    confianza: number | null
+    explicacion: string
+    valida: boolean
+    intento: number
+    latencia_ms: number | null
+    error: string | null
+    created_at: string
+}
+
+
 // Columnas que pide el servicio. Los nombres de las llaves foráneas indican
 // cuál de las dos relaciones con perfiles se quiere.
 export const COLUMNAS_TICKET = `
@@ -72,6 +97,7 @@ export const COLUMNAS_TICKET = `
   requiere_revision, sla_vence_en, nivel_escalamiento, solucion,
   created_at, asignado_en, resuelto_en, cerrado_en, updated_at,
   categoria:categorias(nombre),
+  servicio:servicios(id, nombre, es_critico),
   creador:perfiles!tickets_creado_por_fkey(id, nombre),
   asignado:perfiles!tickets_asignado_a_fkey(id, nombre)
 `
@@ -92,38 +118,68 @@ export const COLUMNAS_SERVICIO = `
   )
 `
 
+export const COLUMNAS_CLASIFICACION_IA = `
+id,
+ticket_id,
+modelo,
+categoria_id,
+categoria:categorias(nombre),
+impacto,
+urgencia,
+prioridad,
+confianza,
+explicacion,
+valida,
+intento,
+latencia_ms,
+error,
+created_at
+`
+
 function una<T>(relacion: Relacion<T>): T | null {
   if (Array.isArray(relacion)) return relacion[0] ?? null
   return relacion ?? null
 }
 
 export function mapearTicket(fila: FilaTicket): Ticket {
-  const creador = una(fila.creador)
-  const asignado = una(fila.asignado)
-  return {
-    id: fila.id,
-    titulo: fila.titulo,
-    descripcion: fila.descripcion,
-    origen: fila.origen,
-    alertaId: fila.alerta_id,
-    estado: fila.estado,
-    categoria: (una(fila.categoria)?.nombre as CategoriaNombre | undefined) ?? null,
-    servicio: null, // el catálogo de servicios llega con la tarea #23
-    creadoPor: creador ? { id: creador.id, nombre: creador.nombre } : null,
-    asignadoA: asignado ? { id: asignado.id, nombre: asignado.nombre } : null,
-    impacto: fila.impacto,
-    urgencia: fila.urgencia,
-    prioridad: fila.prioridad,
-    requiereRevision: fila.requiere_revision,
-    slaVenceEn: fila.sla_vence_en,
-    nivelEscalamiento: fila.nivel_escalamiento,
-    solucion: fila.solucion,
-    createdAt: fila.created_at,
-    asignadoEn: fila.asignado_en,
-    resueltoEn: fila.resuelto_en,
-    cerradoEn: fila.cerrado_en,
-    updatedAt: fila.updated_at,
-  }
+    const creador = una(fila.creador)
+    const asignado = una(fila.asignado)
+    const servicio = una(fila.servicio)
+
+    return {
+        id: fila.id,
+        titulo: fila.titulo,
+        descripcion: fila.descripcion,
+        origen: fila.origen,
+        alertaId: fila.alerta_id,
+        estado: fila.estado,
+        categoria: (una(fila.categoria)?.nombre as CategoriaNombre | undefined) ?? null,
+        servicio: servicio
+            ? {
+                id: servicio.id,
+                nombre: servicio.nombre,
+                esCritico: servicio.es_critico,
+            }
+            : null,
+        creadoPor: creador
+            ? { id: creador.id, nombre: creador.nombre }
+            : null,
+        asignadoA: asignado
+            ? { id: asignado.id, nombre: asignado.nombre }
+            : null,
+        impacto: fila.impacto,
+        urgencia: fila.urgencia,
+        prioridad: fila.prioridad,
+        requiereRevision: fila.requiere_revision,
+        slaVenceEn: fila.sla_vence_en,
+        nivelEscalamiento: fila.nivel_escalamiento,
+        solucion: fila.solucion,
+        createdAt: fila.created_at,
+        asignadoEn: fila.asignado_en,
+        resueltoEn: fila.resuelto_en,
+        cerradoEn: fila.cerrado_en,
+        updatedAt: fila.updated_at,
+    }
 }
 
 export function mapearServicio(fila: FilaServicio): ServicioDetalle {
@@ -147,6 +203,31 @@ export function mapearServicio(fila: FilaServicio): ServicioDetalle {
                 updatedAt: playbook.updated_at,
             }
             : null,
+    }
+}
+
+export function mapearClasificacion(
+    fila: FilaClasificacionIA,
+): NonNullable<TicketDetalle['clasificacion']> {
+    const categoria = Array.isArray(fila.categoria)
+        ? fila.categoria[0]
+        : fila.categoria
+
+    return {
+        id: fila.id,
+        ticketId: fila.ticket_id,
+        modelo: fila.modelo,
+        categoria: (categoria?.nombre as CategoriaNombre | undefined) ?? null,
+        impacto: fila.impacto,
+        urgencia: fila.urgencia,
+        prioridad: fila.prioridad,
+        confianza: fila.confianza,
+        explicacion: fila.explicacion,
+        valida: fila.valida,
+        intento: fila.intento,
+        latenciaMs: fila.latencia_ms,
+        error: fila.error,
+        createdAt: fila.created_at,
     }
 }
 

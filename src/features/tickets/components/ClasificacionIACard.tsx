@@ -23,7 +23,11 @@ export function ClasificacionIACard({ clasificacion, requiereRevision }: Clasifi
         {clasificacion && (
           <CardDescription>
             Confianza{' '}
-            <span className="font-mono font-medium text-foreground">{Math.round(clasificacion.confianza * 100)}%</span>
+                <span className="font-mono font-medium text-foreground">
+                    {clasificacion.confianza === null
+                        ? 'No disponible'
+                        : `${Math.round(clasificacion.confianza * 100)}%`}
+                </span>
           </CardDescription>
         )}
         <CardAction>
