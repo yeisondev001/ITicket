@@ -36,3 +36,4 @@ npm-debug.log*
 /.vs/
 /supabase/config.toml
 /supabase/config.toml
+/supabase/snippets/Untitled query 169.sql
