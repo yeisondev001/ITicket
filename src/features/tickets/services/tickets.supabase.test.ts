@@ -13,7 +13,7 @@ function clienteFalso(respuestas: Record<string, RespuestaFalsa>) {
     const consulta = {
       then: (resolver: (r: unknown) => unknown) => Promise.resolve(respuestas[tabla]).then(resolver),
     } as Record<string, unknown>
-    for (const metodo of ['select', 'insert', 'update', 'eq', 'order']) {
+    for (const metodo of ['select', 'insert', 'update', 'delete', 'eq', 'order']) {
       consulta[metodo] = (...args: unknown[]) => {
         llamadas.push({ tabla, metodo, args })
         return consulta
