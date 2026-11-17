@@ -477,9 +477,20 @@ CREATE POLICY "tickets_update_usuario" ON "public"."tickets"
     (((( SELECT public.rol_actual() AS rol_actual) = 'usuario'::public.rol_usuario) AND (creado_por = ( SELECT auth.uid() AS uid)) AND (estado = 'nuevo'::public.estado_ticket)))
   WITH CHECK ((creado_por = ( SELECT auth.uid() AS uid)));
 
-CREATE POLICY servicios_manage
+CREATE POLICY servicios_insert
   ON public.servicios
-  FOR UPDATE, INSERT, DELETE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    public.rol_actual() IN (
+      'supervisor'::public.rol_usuario,
+      'administrador'::public.rol_usuario
+    )
+  );
+
+CREATE POLICY servicios_update
+  ON public.servicios
+  FOR UPDATE
   TO authenticated
   USING (
     public.rol_actual() IN (
@@ -488,6 +499,17 @@ CREATE POLICY servicios_manage
     )
   )
   WITH CHECK (
+    public.rol_actual() IN (
+      'supervisor'::public.rol_usuario,
+      'administrador'::public.rol_usuario
+    )
+  );
+
+CREATE POLICY servicios_delete
+  ON public.servicios
+  FOR DELETE
+  TO authenticated
+  USING (
     public.rol_actual() IN (
       'supervisor'::public.rol_usuario,
       'administrador'::public.rol_usuario
