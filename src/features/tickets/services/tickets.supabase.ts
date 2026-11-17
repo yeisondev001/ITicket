@@ -131,6 +131,14 @@ export function crearServicioSupabase(db: SupabaseClient) {
     return mapearTicket(data as unknown as FilaTicket)
   }
 
+  // Solo el administrador puede borrar (política tickets_delete_admin). Si RLS
+  // no lo permite, Supabase no da error: simplemente no borra ninguna fila.
+  async function eliminarTicket(id: number): Promise<void> {
+    const { data, error } = await db.from('tickets').delete().eq('id', id).select('id')
+    if (error) throw new ErrorDeDatos(error)
+    if (!data || data.length === 0) throw new ErrorDeDatos({ code: '42501' })
+  }
+
   return {
     listarTickets,
     obtenerTicket,
@@ -139,5 +147,6 @@ export function crearServicioSupabase(db: SupabaseClient) {
     cambiarEstado,
     agregarComentario,
     tomarTicket,
+    eliminarTicket,
   }
 }

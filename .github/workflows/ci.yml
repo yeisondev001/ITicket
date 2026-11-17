@@ -46,7 +46,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.0.0
 
       # Levanta un Postgres de Supabase vacío y le aplica todas las migraciones.
       - name: Base de datos local con las migraciones
