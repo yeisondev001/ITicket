@@ -477,6 +477,23 @@ CREATE POLICY "tickets_update_usuario" ON "public"."tickets"
     (((( SELECT public.rol_actual() AS rol_actual) = 'usuario'::public.rol_usuario) AND (creado_por = ( SELECT auth.uid() AS uid)) AND (estado = 'nuevo'::public.estado_ticket)))
   WITH CHECK ((creado_por = ( SELECT auth.uid() AS uid)));
 
+CREATE POLICY servicios_manage
+  ON public.servicios
+  FOR UPDATE, INSERT, DELETE
+  TO authenticated
+  USING (
+    public.rol_actual() IN (
+      'supervisor'::public.rol_usuario,
+      'administrador'::public.rol_usuario
+    )
+  )
+  WITH CHECK (
+    public.rol_actual() IN (
+      'supervisor'::public.rol_usuario,
+      'administrador'::public.rol_usuario
+    )
+  );
+
 CREATE EVENT TRIGGER "ensure_rls"
   ON ddl_command_end
   WHEN TAG IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')

@@ -119,8 +119,16 @@ export function crearServicioSupabase(db: SupabaseClient) {
     if (error) throw new ErrorDeDatos(error)
   }
 
-  async function tomarTicket(id: number, tecnico: PersonaResumen): Promise<Ticket> {
-    return actualizar(id, { asignado_a: tecnico.id, asignado_en: new Date().toISOString(), estado: 'asignado' })
+  async function tomarTicket(id: number, _tecnico: PersonaResumen): Promise<Ticket> {
+    const { data, error} = await db.rpc('tomar_ticket', {
+        p_ticket_id: id,
+    })
+
+    if (error) {
+        throw new ErrorDeDatos(error)
+    }
+
+    return mapearTicket(data as unknown as FilaTicket)
   }
 
   return {

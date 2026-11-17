@@ -1,36 +1,47 @@
-CREATE TABLE public.clasificaciones_ia (
-	id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  ticket_id bigint NOT NULL REFERENCES public.tickets(id) ON DELETE CASCADE,
-  modelo text NOT NULL,
-  categoria_id smallint REFERENCES public.categorias(id),
-  impacto public.nivel_impacto,
-  urgencia public.nivel_urgencia,
-  prioridad public.prioridad,
-  confianza numeric(4,3) CHECK (confianza IS NULL OR (confianza >= 0 AND confianza <= 1)),
-  explicacion text NOT NULL DEFAULT '',
-  valida boolean NOT NULL DEFAULT false,
-  intento smallint NOT NULL DEFAULT 1 CHECK (intento > 0),
-  latencia_ms integer CHECK (latencia_ms IS NULL OR latencia_ms >= 0),
-  error text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+create or replace function public.tomar_ticket(p_ticket_id bigint)
+returns public.tickets
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    ticket_tomado public.tickets;
+begin
+    update public.tickets t
+       set asignado_a = auth.uid(),
+           asignado_en = now(),
+           estado = 'asignado'::public.estado_ticket,
+           updated_at = now()
+     where t.id = p_ticket_id
+       and t.asignado_a is null
+       and exists (
+           select 1
+             from public.perfiles p
+            where p.id = auth.uid()
+              and p.rol = 'tecnico'::public.rol_usuario
+              and p.activo = true
+       )
+       and exists (
+           select 1
+             from public.tecnico_categorias tc
+            where tc.tecnico_id = auth.uid()
+              and tc.categoria_id = t.categoria_id
+       )
+    returning t.*
+      into ticket_tomado;
 
-CREATE INDEX clasificaciones_ia_ticket_idx ON public.clasificaciones_ia(ticket_id, created_at DESC);
+    if ticket_tomado.id is null then
+        raise exception
+            using message =
+                'El ticket ya fue tomado o no pertenece a una categoría permitida';
+    end if;
 
-ALTER TABLE public.clasificaciones_ia ENABLE ROW LEVEL SECURITY;
+    return ticket_tomado;
+end;
+$$;
 
-CREATE POLICY "clasificaciones_ia_select" ON public.clasificaciones_ia
-  FOR SELECT TO authenticated
-  USING (EXISTS (
-	SELECT 1 FROM public.tickets t
-	WHERE t.id = clasificaciones_ia.ticket_id
-  ));
 
-CREATE POLICY "clasificaciones_ia_admin" ON public.clasificaciones_ia
-  FOR ALL TO authenticated
-  USING (public.rol_actual() = 'administrador'::public.rol_usuario)
-  WITH CHECK (public.rol_actual() = 'administrador'::public.rol_usuario);
+revoke all on function public.tomar_ticket(bigint) from public;
 
-REVOKE ALL ON TABLE public.clasificaciones_ia FROM anon;
-GRANT SELECT ON TABLE public.clasificaciones_ia TO authenticated;
-GRANT USAGE, SELECT ON SEQUENCE public.clasificaciones_ia_id_seq TO service_role;
+grant execute on function public.tomar_ticket(bigint)
+    to authenticated;
